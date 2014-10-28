@@ -70,7 +70,7 @@ tokenize <- function(strings, orthography.profile = NULL, replace = FALSE,
     strings <- sapply(strings, function(x){paste(x, collapse = sep)})
     
     # replace orthography if specified
-    if (replace)) {
+    if (replace) {
       graphs <- profile$graphs[,replacements]
       graphs <- transcode(graphs)
       graphs[graphs == "NULL"] <- ""
@@ -165,7 +165,7 @@ tokenize <- function(strings, orthography.profile = NULL, replace = FALSE,
     }
   }
 }  
-
-
+  
+  
 # allow alternative spelling
-tokenise <- tokenize
+tokenise <- tokenize  
