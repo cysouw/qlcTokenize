@@ -10,6 +10,7 @@ write.orthography.profile <- function(strings, replacements = TRUE, sep = NULL, 
   # prepare naming of file
   if (substr(file, nchar(file)-3, nchar(file)) != ".prf") {
     filename <- paste(file, ".prf", sep = "")
+  }
   
   # split using unicode definitions, except when 'sep' is specified, then split by sep
   if (is.null(sep)) {

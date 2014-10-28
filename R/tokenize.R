@@ -1,3 +1,4 @@
+
 # ================
 # tokenize strings
 # ================
@@ -164,8 +165,8 @@ tokenize <- function(strings, orthography.profile = NULL, replace = FALSE,
                   , quote = FALSE, sep = "\t", row.names = FALSE)
     }
   }
-}  
-  
-  
-# allow alternative spelling
-tokenise <- tokenize  
+}
+
+# alternative name of function
+tokenise <- tokenize
+
