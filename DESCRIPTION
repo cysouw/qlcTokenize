@@ -1,0 +1,13 @@
+Package: qlcTokenize
+Type: Package
+Title: Processing of orthographies using orthography profiles
+Version: 0.1
+Date: 2014-10-28
+Author: Michael Cyosuw
+Maintainer: Michael Cysouw <cysouw@mac.com>
+Description: An easy-to-use interface for various Unicode functionality for processing and harmonizing orthographic representations
+License: GPL-3
+Depends: stringi (>= 0.2-5)
+Encoding: UTF-8
+Suggests: knitr
+VignetteBuilder: knitr
