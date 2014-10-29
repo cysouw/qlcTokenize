@@ -13,7 +13,7 @@ This function is the main function to produce, test and apply orthography profil
 tokenize(strings, orthography.profile = NULL, replace = FALSE,
   graphemes = "graphemes", patterns = "patterns", replacements = NULL,
   sep = "\u00B7", normalize = "NFC", 
-  traditional.output = TRUE, file = NULL)
+  space.replacement = TRUE, file = NULL)
 }
 \arguments{
   \item{strings}{
@@ -40,8 +40,8 @@ tokenize(strings, orthography.profile = NULL, replace = FALSE,
   \item{normalize}{
   which normalization to use, defaults to "NFC". Other option is "NFD". Any other input will result in no normalisation being performed.
   }
-  \item{traditional.output}{
-  logical, defaults to TRUE. When TRUE, then the tokenized strings are presented with spaces between graphemes and space-hash-space (\code{" # "}) instead of spaces between words in the original strings. When FALSE, spaces in the original strings are treated as regular characters, and the separator (see above) is used as character to mark the tokenization.
+  \item{space.replacement}{
+  logical, defaults to TRUE. When TRUE, then spaces in the original string are not included in the orthography profile, but treated as word boundaries. then the tokenized strings are presented with spaces between graphemes and space-hash-space (\code{" # "}) instead of spaces between words in the original strings. When FALSE, spaces in the original strings are treated as regular characters, and the separator (see above) is used as character to mark the tokenization.
   }
   \item{file}{
   filename for results to be written. No suffix should be specified, as various different files with different suffixes are produced.

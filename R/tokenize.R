@@ -6,7 +6,7 @@
 tokenize <- function(strings, orthography.profile = NULL, replace = FALSE,
                 graphemes = "graphemes", patterns = "patterns", replacements = "replacements",
                 sep = "\u00B7", normalize = "NFC", 
-                traditional.output = TRUE, file = NULL) {
+                space.replacement = TRUE, file = NULL) {
   
   # normalization
   if (normalize == "NFC" | normalize == "nfc") {
@@ -24,20 +24,28 @@ tokenize <- function(strings, orthography.profile = NULL, replace = FALSE,
   # read orthography profile (or make new one)
   if (is.null(orthography.profile)) {
     # make new orthography profile   
-    graphs  <- write.orthography.profile(strings)[, graphemes, drop = FALSE]
+    graphs  <- write.orthography.profile(strings, info = FALSE)
     profile <- list(graphs = graphs, rules = NULL)    
   } else if (is.character(orthography.profile)) {
     # read profile from file
-    profile <- read.orthography.profile(orthography.profile, graphemes, patterns, replacements)
+    profile <- read.orthography.profile(orthography.profile
+                                        , graphemes
+                                        , patterns
+                                        , replacements)
   } else {
     # in case orthography profile is an R object
     profile <- orthography.profile
   }
   
+ 
+  
   # do grapheme-splitting
   if(!is.null(profile$graphs)) {
     # normalise characters in profile, just to be sure
     graphs <- transcode(profile$graphs[,graphemes])
+    
+    # possibly add space to graphs
+    if (space.replacement) { graphs <- c(" ", graphs) }
     
     # order graphs to size
     graphs_parts <- strsplit(graphs, split = "")
@@ -46,7 +54,8 @@ tokenize <- function(strings, orthography.profile = NULL, replace = FALSE,
     
     # check for missing graphems in orthography profile
     # and take care of multigraphs
-    # just take some high unicode range and replace all graphemes with individual characters
+    # just take some high unicode range 
+    # and replace all graphemes with individual characters
     check <- strings
     for (i in graph_order) { 
       check <- gsub(graphs[i],"",check, fixed = TRUE)
@@ -75,6 +84,8 @@ tokenize <- function(strings, orthography.profile = NULL, replace = FALSE,
       graphs <- profile$graphs[,replacements]
       graphs <- transcode(graphs)
       graphs[graphs == "NULL"] <- ""
+      # possibly add space to graphs
+      if (space.replacement) { graphs <- c(" ", graphs) }
     }
     
     # put back the multigraphs-substitution characters
@@ -95,7 +106,7 @@ tokenize <- function(strings, orthography.profile = NULL, replace = FALSE,
   }
   
   # make traditional output when asked
-  if (traditional.output){
+  if (space.replacement){
     strings <- gsub(" ","#",strings)
     strings <- gsub(sep," ",strings)
     sep <- " # | "
@@ -149,19 +160,19 @@ tokenize <- function(strings, orthography.profile = NULL, replace = FALSE,
     
     # file with tokenization is always returned
     write.table(tokenization
-                , file = paste(file, ".txt", sep = "")
+                , file = paste(file, "_tokenized.csv", sep = "")
                 , quote = FALSE, sep = "\t", row.names = FALSE)
     
     if (!replace) {
       # additionally write orthography profile when no replacements are made
       write.orthography.profile(strings, sep = sep, info = TRUE
-                                , file = paste(file, ".prf", sep=""))
+                                , file = paste(file, "_profile.prf", sep=""))
     }
     
     if (sum(leftover) > 0 ) {
       # additionally write table with warnings
       write.table(problems
-                  , file = paste(file, "_warnings.txt", sep = "")
+                  , file = paste(file, "_warnings.csv", sep = "")
                   , quote = FALSE, sep = "\t", row.names = FALSE)
     }
   }
