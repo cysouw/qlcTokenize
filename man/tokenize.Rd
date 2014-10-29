@@ -1,4 +1,5 @@
 \name{tokenize}
+\alias{tokenize}
 \alias{tokenise}
 
 \title{
@@ -11,7 +12,7 @@ This function is the main function to produce, test and apply orthography profil
 }
 \usage{
 tokenize(strings, orthography.profile = NULL, replace = FALSE,
-  graphemes = "graphemes", patterns = "patterns", replacements = NULL,
+  graphemes = "graphemes", patterns = "patterns", replacements = "replacements",
   sep = "\u00B7", normalize = "NFC", 
   space.replacement = TRUE, file = NULL)
 }
