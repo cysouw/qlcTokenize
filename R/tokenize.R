@@ -160,19 +160,19 @@ tokenize <- function(strings, orthography.profile = NULL, replace = FALSE,
     
     # file with tokenization is always returned
     write.table(tokenization
-                , file = paste(file, "_tokenized.csv", sep = "")
+                , file = paste(file, ".tokenized", sep = "")
                 , quote = FALSE, sep = "\t", row.names = FALSE)
     
     if (!replace) {
       # additionally write orthography profile when no replacements are made
       write.orthography.profile(strings, sep = sep, info = TRUE
-                                , file = paste(file, "_profile.prf", sep=""))
+                                , file = paste(file, ".prf", sep=""))
     }
     
     if (sum(leftover) > 0 ) {
       # additionally write table with warnings
       write.table(problems
-                  , file = paste(file, "_warnings.csv", sep = "")
+                  , file = paste(file, ".warnings", sep = "")
                   , quote = FALSE, sep = "\t", row.names = FALSE)
     }
   }
