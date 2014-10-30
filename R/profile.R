@@ -6,7 +6,7 @@
 # =================================================================
 
 write.orthography.profile <- function(strings, replacements = TRUE, sep = NULL, file = NULL, info = TRUE) {
-
+  
   # prepare naming of file
   if (!is.null(file)) {
     if (substr(file, nchar(file)-3, nchar(file)) != ".prf") {
@@ -50,7 +50,10 @@ write.orthography.profile <- function(strings, replacements = TRUE, sep = NULL, 
 
   # return statistics as data frame, or write to file when "file" is specified
   if (is.null(file)) {
-    return(as.data.frame(result))
+    result <- as.data.frame(result)
+    # remove rownames to avoid confusion
+    rownames(result) <- NULL
+    return(result)
   } else {
     write.table(result, file = file, quote = FALSE, sep = "\t", row.names = FALSE)
   }
