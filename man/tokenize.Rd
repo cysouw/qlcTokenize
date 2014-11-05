@@ -27,16 +27,16 @@ tokenize(strings, orthography.profile = NULL, replace = FALSE,
   logical: should orthographic replacement be performed after tokenization. Defaults to FALSE.
   }
   \item{graphemes}{
-  name (or number) of the column in the orthography profile listing the graphemes to be used for the tokenization.
+  name (or number) of the column in the orthography profile listing the graphemes to be used for the tokenization. Defaults to "graphemes"
   }
   \item{patterns}{
-  name (or number) of the column in the orthography profile listing the patterns to be used for the regular expressions that can optionally be used after base-tokenisation.
+  name (or number) of the column in the orthography profile listing the patterns to be used for the regular expressions that can optionally be used after base-tokenisation. Defaults to "patterns"
   }
   \item{replacements}{
-  name (or number) of the column in the orthography profile listing the replacements.
+  name (or number) of the column in the orthography profile listing the replacements. Defaults to "replacements"
   }
   \item{sep}{
-  separator to be inserted between graphemes. Defaults to U+00B7 ("MIDDLE DOT"). In the default setting, the usage of this separator remains invisible to the user. However, when \code{traditional.output = FALSE}, then this separator becomes visible in the output.
+  separator to be inserted between graphemes. Defaults to U+00B7 ("MIDDLE DOT"). In the default setting, the usage of this separator remains invisible to the user. However, when \code{space.replacement = FALSE}, then this separator becomes visible in the output.
   }
   \item{normalize}{
   which normalization to use, defaults to "NFC". Other option is "NFD". Any other input will result in no normalisation being performed.
