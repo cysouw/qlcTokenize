@@ -96,19 +96,45 @@ There is also a corresponding function `read.orthography.profile` in case you ha
 
 In most cases you will probably want to use the function `tokenize`. Besides creating orthography profiles, it will also check orthography profiles against new data (and give warnings if there is something), it will separate the input strings into graphemes, and even perform transliteration. Let's run through a typical workflow using `tokenize`.
 
-Given some data in a specific orthography, you can call `tokenize` on the data to create an initial orthography profile (just like with `write.orthography.profile` discussed above, though there are a few small differences). The output of `tokenize` always is a list of three elements: `$strings`, `$orthography.profile`, and `$warnings`. The second element in the list `$orthography.profile` is the table we already encountered above. The first element `$strings` is a table with the original strings, and the tokenization into graphemes as specified by the orthography profile (which in this case was automatically produced, so there is nothing strange happening here, just a splitting into letters). The `$warnings` are just empty at this stage.
+Given some data in a specific orthography, you can call `tokenize` on the data to create an initial orthography profile (just like with `write.orthography.profile` discussed above, though there are a few small differences). The output of `tokenize` always is a list of three elements: `$strings`, `$orthography.profile`, and `$warnings`. The second element in the list `$orthography.profile` is the table we already encountered above. The first element `$strings` is a table with the original strings, and the tokenization into graphemes as specified by the orthography profile (which in the case below was automatically produced, so there is nothing strange happening here, just a splitting into letters). The `$warnings` are just empty at this stage, but it will contain information about strings that cannot be tokenized with a pre-established profile.
 
 ```{r}
 tokenize(test)
 ```
 
-Now, you can work further with this profile inside R, but we find it easier to write the results to files, then correct/change these files, and use R again to process the data again.
+Now, you can work further with this profile inside R, but we find it easier to write the results to files, then correct/change these files, and use R again to process the data again. In this vignette we will not start writing anything to your disk (so the following commands will not be executed), but you should try something like the following:
 
-```{r}
+```{r, eval = FALSE}
 dir.create("~/Desktop/tokenize")
-tokenize(test, file="~/Desktop/tokenize/test")
+setwd("~/Desktop/tokenize")
+tokenize(test, file="test")
 ```
 
-```{r}
-tokenize(test, orthography.profile = "~/Desktop/tokenize/test")
+We are going to add two new graphemes to the profile: open the file "test.prf" (in the folder "tokenize" on your Desktop) with a text editor like Textmate, Textwrangler or Notepad++ (don't use Microsoft Word!!!). First, add a new line with only "th" on it and, second, add another line with only "ng" on it. The file will then roughly look like this:
+
+```{r, echo = FALSE, results='asis'}
+tmp <- as.data.frame(rbind(as.matrix(tokenize(test)$o),c("th"," "," "," "," "),c("ng"," "," "," "," ")))
+knitr::kable(tmp)
 ```
+
+Now try to use this this profile with the function `tokenize`. Note that you will get a different tokenization of the strings ("th" and "ng" are now treated as a complex grapheme) and you will also obtain an updated orthography profile, which you could also immediately use to overwrite the existing profile on your disk.
+
+```{r, eval = FALSE}
+tokenize(test, orthography.profile = "test")
+
+# with overwriting of the existing profile:
+# tokenize(test, orthography.profile = "test", file = "test")
+
+# note that you can abbreviate this in R:
+# tokenize(test, o = "test", f = "test")
+```
+
+```{r, echo = FALSE}
+tokenize(test, orthography.profile = tmp)
+```
+
+
+
+
+
+
