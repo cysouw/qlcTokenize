@@ -82,19 +82,27 @@ There are a few interesting aspects in this orthography profile.
 - Finally, note that the function also accepts vectors of strings:
 
 ```{r}
-test <- c("this", "is", "a", "vector", "with", "many", "strings")
+test <- c("this thing", "is", "a", "vector", "with", "many", "strings")
+```
+```{r, eval = FALSE}
 write.orthography.profile(test)
+```
+```{r echo=FALSE, results='asis'}
+# some example string
+knitr::kable(write.orthography.profile(test))
 ```
 
 Normally, you won't type your data directly into R, but load the data from some file with functions like `scan` or `read.table`, and then perform `write.orthography.profile` on the data. Given the information as provided by the orthography profile, you might then want to go back to the original file and correct the inconsistencies, and then check again to see if everything is consistent now.
 
-There is also a corresponding function `read.orthography.profile` in case you have one made yourself, or got one from somebody else. However, in most practical situations, you will only use both these low-level functions as part of a more powerful function called `tokenize`.
+There is also a corresponding function `read.orthography.profile` in case you have a profile made yourself, or got a profile from somebody else. However, in most practical situations, you will only use both these low-level read/write-functions as part of a more powerful function called `tokenize` that will be decribed next.
 
 # Tokenization
 
 In most cases you will probably want to use the function `tokenize`. Besides creating orthography profiles, it will also check orthography profiles against new data (and give warnings if there is something), it will separate the input strings into graphemes, and even perform transliteration. Let's run through a typical workflow using `tokenize`.
 
-Given some data in a specific orthography, you can call `tokenize` on the data to create an initial orthography profile (just like with `write.orthography.profile` discussed above, though there are a few small differences). The output of `tokenize` always is a list of three elements: `$strings`, `$orthography.profile`, and `$warnings`. The second element in the list `$orthography.profile` is the table we already encountered above. The first element `$strings` is a table with the original strings, and the tokenization into graphemes as specified by the orthography profile (which in the case below was automatically produced, so there is nothing strange happening here, just a splitting into letters). The `$warnings` are just empty at this stage, but it will contain information about strings that cannot be tokenized with a pre-established profile.
+Given some data in a specific orthography, you can call `tokenize` on the data to create an initial orthography profile (just like with `write.orthography.profile` discussed above, though there are a few small differences. For example: spaces are not included by default here).
+
+The output of `tokenize` always is a list of three elements: `$strings`, `$orthography.profile`, and `$warnings`. The second element in the list `$orthography.profile` is the table we already encountered above. The first element `$strings` is a table with the original strings, and the tokenization into graphemes as specified by the orthography profile (which in the case below was automatically produced, so there is nothing strange happening here, just a splitting into letters). The `$warnings` are just empty at this stage, but it will contain information about strings that cannot be tokenized with a pre-established profile.
 
 ```{r}
 tokenize(test)

@@ -14,7 +14,7 @@ There is a vignette trying to explain the intended usage of this package. Unfort
 
     devtools::install_github("cysouw/qlcTokenize", build_vignettes = TRUE)
 
-In the meantim, you can read the vignette directly here on github by looking in the folder "vignettes" above, using the files with suffix ".md".
+In the meantime, you can read the vignette directly here on github by looking in the folder "vignettes" above, using the files with suffix ".md".
 
 Michael Cysouw
 cysouw@mac.com

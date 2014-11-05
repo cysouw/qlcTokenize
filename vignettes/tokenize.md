@@ -79,66 +79,73 @@ There are a few interesting aspects in this orthography profile.
 -   Finally, note that the function also accepts vectors of strings:
 
 ``` r
-test <- c("this", "is", "a", "vector", "with", "many", "strings")
+test <- c("this thing", "is", "a", "vector", "with", "many", "strings")
+```
+
+``` r
 write.orthography.profile(test)
 ```
 
-    ##    graphemes replacements frequency codepoints                names
-    ## 1          a            a         2     U+0061 LATIN SMALL LETTER A
-    ## 2          c            c         1     U+0063 LATIN SMALL LETTER C
-    ## 3          e            e         1     U+0065 LATIN SMALL LETTER E
-    ## 4          g            g         1     U+0067 LATIN SMALL LETTER G
-    ## 5          h            h         2     U+0068 LATIN SMALL LETTER H
-    ## 6          i            i         4     U+0069 LATIN SMALL LETTER I
-    ## 7          m            m         1     U+006D LATIN SMALL LETTER M
-    ## 8          n            n         2     U+006E LATIN SMALL LETTER N
-    ## 9          o            o         1     U+006F LATIN SMALL LETTER O
-    ## 10         r            r         2     U+0072 LATIN SMALL LETTER R
-    ## 11         s            s         4     U+0073 LATIN SMALL LETTER S
-    ## 12         t            t         4     U+0074 LATIN SMALL LETTER T
-    ## 13         v            v         1     U+0076 LATIN SMALL LETTER V
-    ## 14         w            w         1     U+0077 LATIN SMALL LETTER W
-    ## 15         y            y         1     U+0079 LATIN SMALL LETTER Y
+| graphemes | replacements | frequency | codepoints | names                |
+|:----------|:-------------|:----------|:-----------|:---------------------|
+|           |              | 1         | U+0020     | SPACE                |
+| a         | a            | 2         | U+0061     | LATIN SMALL LETTER A |
+| c         | c            | 1         | U+0063     | LATIN SMALL LETTER C |
+| e         | e            | 1         | U+0065     | LATIN SMALL LETTER E |
+| g         | g            | 2         | U+0067     | LATIN SMALL LETTER G |
+| h         | h            | 3         | U+0068     | LATIN SMALL LETTER H |
+| i         | i            | 5         | U+0069     | LATIN SMALL LETTER I |
+| m         | m            | 1         | U+006D     | LATIN SMALL LETTER M |
+| n         | n            | 3         | U+006E     | LATIN SMALL LETTER N |
+| o         | o            | 1         | U+006F     | LATIN SMALL LETTER O |
+| r         | r            | 2         | U+0072     | LATIN SMALL LETTER R |
+| s         | s            | 4         | U+0073     | LATIN SMALL LETTER S |
+| t         | t            | 5         | U+0074     | LATIN SMALL LETTER T |
+| v         | v            | 1         | U+0076     | LATIN SMALL LETTER V |
+| w         | w            | 1         | U+0077     | LATIN SMALL LETTER W |
+| y         | y            | 1         | U+0079     | LATIN SMALL LETTER Y |
 
 Normally, you won't type your data directly into R, but load the data from some file with functions like `scan` or `read.table`, and then perform `write.orthography.profile` on the data. Given the information as provided by the orthography profile, you might then want to go back to the original file and correct the inconsistencies, and then check again to see if everything is consistent now.
 
-There is also a corresponding function `read.orthography.profile` in case you have one made yourself, or got one from somebody else. However, in most practical situations, you will only use both these low-level functions as part of a more powerful function called `tokenize`.
+There is also a corresponding function `read.orthography.profile` in case you have a profile made yourself, or got a profile from somebody else. However, in most practical situations, you will only use both these low-level read/write-functions as part of a more powerful function called `tokenize` that will be decribed next.
 
 Tokenization
 ============
 
 In most cases you will probably want to use the function `tokenize`. Besides creating orthography profiles, it will also check orthography profiles against new data (and give warnings if there is something), it will separate the input strings into graphemes, and even perform transliteration. Let's run through a typical workflow using `tokenize`.
 
-Given some data in a specific orthography, you can call `tokenize` on the data to create an initial orthography profile (just like with `write.orthography.profile` discussed above, though there are a few small differences). The output of `tokenize` always is a list of three elements: `$strings`, `$orthography.profile`, and `$warnings`. The second element in the list `$orthography.profile` is the table we already encountered above. The first element `$strings` is a table with the original strings, and the tokenization into graphemes as specified by the orthography profile (which in the case below was automatically produced, so there is nothing strange happening here, just a splitting into letters). The `$warnings` are just empty at this stage, but it will contain information about strings that cannot be tokenized with a pre-established profile.
+Given some data in a specific orthography, you can call `tokenize` on the data to create an initial orthography profile (just like with `write.orthography.profile` discussed above, though there are a few small differences. For example: spaces are not included by default here).
+
+The output of `tokenize` always is a list of three elements: `$strings`, `$orthography.profile`, and `$warnings`. The second element in the list `$orthography.profile` is the table we already encountered above. The first element `$strings` is a table with the original strings, and the tokenization into graphemes as specified by the orthography profile (which in the case below was automatically produced, so there is nothing strange happening here, just a splitting into letters). The `$warnings` are just empty at this stage, but it will contain information about strings that cannot be tokenized with a pre-established profile.
 
 ``` r
 tokenize(test)
 ```
 
     ## $strings
-    ##   originals     tokenized
-    ## 1      this       t h i s
-    ## 2        is           i s
-    ## 3         a             a
-    ## 4    vector   v e c t o r
-    ## 5      with       w i t h
-    ## 6      many       m a n y
-    ## 7   strings s t r i n g s
+    ##    originals           tokenized
+    ## 1 this thing t h i s # t h i n g
+    ## 2         is                 i s
+    ## 3          a                   a
+    ## 4     vector         v e c t o r
+    ## 5       with             w i t h
+    ## 6       many             m a n y
+    ## 7    strings       s t r i n g s
     ## 
     ## $orthography.profile
     ##    graphemes replacements frequency codepoints                names
     ## 1          a            a         2     U+0061 LATIN SMALL LETTER A
     ## 2          c            c         1     U+0063 LATIN SMALL LETTER C
     ## 3          e            e         1     U+0065 LATIN SMALL LETTER E
-    ## 4          g            g         1     U+0067 LATIN SMALL LETTER G
-    ## 5          h            h         2     U+0068 LATIN SMALL LETTER H
-    ## 6          i            i         4     U+0069 LATIN SMALL LETTER I
+    ## 4          g            g         2     U+0067 LATIN SMALL LETTER G
+    ## 5          h            h         3     U+0068 LATIN SMALL LETTER H
+    ## 6          i            i         5     U+0069 LATIN SMALL LETTER I
     ## 7          m            m         1     U+006D LATIN SMALL LETTER M
-    ## 8          n            n         2     U+006E LATIN SMALL LETTER N
+    ## 8          n            n         3     U+006E LATIN SMALL LETTER N
     ## 9          o            o         1     U+006F LATIN SMALL LETTER O
     ## 10         r            r         2     U+0072 LATIN SMALL LETTER R
     ## 11         s            s         4     U+0073 LATIN SMALL LETTER S
-    ## 12         t            t         4     U+0074 LATIN SMALL LETTER T
+    ## 12         t            t         5     U+0074 LATIN SMALL LETTER T
     ## 13         v            v         1     U+0076 LATIN SMALL LETTER V
     ## 14         w            w         1     U+0077 LATIN SMALL LETTER W
     ## 15         y            y         1     U+0079 LATIN SMALL LETTER Y
@@ -161,15 +168,15 @@ We are going to add two new graphemes to the profile: open the file "test.prf" (
 | a         | a            | 2         | U+0061     | LATIN SMALL LETTER A |
 | c         | c            | 1         | U+0063     | LATIN SMALL LETTER C |
 | e         | e            | 1         | U+0065     | LATIN SMALL LETTER E |
-| g         | g            | 1         | U+0067     | LATIN SMALL LETTER G |
-| h         | h            | 2         | U+0068     | LATIN SMALL LETTER H |
-| i         | i            | 4         | U+0069     | LATIN SMALL LETTER I |
+| g         | g            | 2         | U+0067     | LATIN SMALL LETTER G |
+| h         | h            | 3         | U+0068     | LATIN SMALL LETTER H |
+| i         | i            | 5         | U+0069     | LATIN SMALL LETTER I |
 | m         | m            | 1         | U+006D     | LATIN SMALL LETTER M |
-| n         | n            | 2         | U+006E     | LATIN SMALL LETTER N |
+| n         | n            | 3         | U+006E     | LATIN SMALL LETTER N |
 | o         | o            | 1         | U+006F     | LATIN SMALL LETTER O |
 | r         | r            | 2         | U+0072     | LATIN SMALL LETTER R |
 | s         | s            | 4         | U+0073     | LATIN SMALL LETTER S |
-| t         | t            | 4         | U+0074     | LATIN SMALL LETTER T |
+| t         | t            | 5         | U+0074     | LATIN SMALL LETTER T |
 | v         | v            | 1         | U+0076     | LATIN SMALL LETTER V |
 | w         | w            | 1         | U+0077     | LATIN SMALL LETTER W |
 | y         | y            | 1         | U+0079     | LATIN SMALL LETTER Y |
@@ -189,29 +196,29 @@ tokenize(test, orthography.profile = "test")
 ```
 
     ## $strings
-    ##   originals    tokenized
-    ## 1      this       th i s
-    ## 2        is          i s
-    ## 3         a            a
-    ## 4    vector  v e c t o r
-    ## 5      with       w i th
-    ## 6      many      m a n y
-    ## 7   strings s t r i ng s
+    ##    originals        tokenized
+    ## 1 this thing th i s # th i ng
+    ## 2         is              i s
+    ## 3          a                a
+    ## 4     vector      v e c t o r
+    ## 5       with           w i th
+    ## 6       many          m a n y
+    ## 7    strings     s t r i ng s
     ## 
     ## $orthography.profile
     ##    graphemes replacements frequency     codepoints
     ## 1          a            a         2         U+0061
     ## 2          c            c         1         U+0063
     ## 3          e            e         1         U+0065
-    ## 4          i            i         4         U+0069
+    ## 4          i            i         5         U+0069
     ## 5          m            m         1         U+006D
     ## 6          n            n         1         U+006E
-    ## 7         ng           ng         1 U+006E, U+0067
+    ## 7         ng           ng         2 U+006E, U+0067
     ## 8          o            o         1         U+006F
     ## 9          r            r         2         U+0072
     ## 10         s            s         4         U+0073
     ## 11         t            t         2         U+0074
-    ## 12        th           th         2 U+0074, U+0068
+    ## 12        th           th         3 U+0074, U+0068
     ## 13         v            v         1         U+0076
     ## 14         w            w         1         U+0077
     ## 15         y            y         1         U+0079
