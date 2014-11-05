@@ -26,19 +26,14 @@ tokenize <- function(strings, orthography.profile = NULL, replace = FALSE,
     # make new orthography profile   
     graphs  <- write.orthography.profile(strings, info = FALSE)
     profile <- list(graphs = graphs, rules = NULL)    
-  } else if (is.character(orthography.profile)) {
-    # read profile from file
+  } else {
+    # read profile from file or try to interpret "file" as R object
     profile <- read.orthography.profile(orthography.profile
                                         , graphemes
                                         , patterns
                                         , replacements)
-  } else {
-    # in case orthography profile is an R object
-    profile <- orthography.profile
   }
-  
- 
-  
+
   # do grapheme-splitting
   if(!is.null(profile$graphs)) {
     # normalise characters in profile, just to be sure

@@ -68,33 +68,50 @@ read.orthography.profile <- function(file,
                                      patterns = "patterns", 
                                      replacements = "replacements") {
 
-  # prepare naming of files
-  if (substr(file, nchar(file)-2, nchar(file)) == "prf") {
-    filename <- substr(file, 1, nchar(file)-4)
+  # when "file" is an R object
+  if (!is.character(file)) {
+    if (length(file) == 2) {
+      # assume that it is already a valid orthography profile
+      return (file)
+    } else if (is.data.frame(file)) {
+      # assume that it is a dataframe with graphemes
+      graphs <- file[,c(graphemes, replacements), drop = FALSE]
+      rules <-  NULL
+      return( list(graphs = graphs, rules = rules) )
+    } else {
+      stop("no valid orthography information")
+    }
   } else {
-    filename <- file
-  }
+  # read from file
+    
+    # prepare naming of files
+    if (substr(file, nchar(file)-2, nchar(file)) == "prf") {
+      filename <- substr(file, 1, nchar(file)-4)
+    } else {
+      filename <- file
+    }
+    
+    # prepare table
+    graphemesFile <- paste(filename, ".prf", sep = "")
+    if (file.exists(graphemesFile)) {
+      graphs <- read.table(graphemesFile, sep = "\t", header = TRUE, 
+                       colClasses = "character", quote = "", fill = TRUE)
+      graphs <- graphs[, c(graphemes, replacements), drop = FALSE]
+    } else {
+      graphs = NULL
+    }
   
-  # prepare table
-  graphemesFile <- paste(filename, ".prf", sep = "")
-  if (file.exists(graphemesFile)) {
-    graphs <- read.table(graphemesFile, sep = "\t", header = TRUE, 
-                     colClasses = "character", quote = "", fill = TRUE)
-    graphs <- graphs[, c(graphemes, replacements), drop = FALSE]
-  } else {
-    graphs = NULL
+    # prepare rules
+    rulesFile <- paste(filename, ".rules", sep = "")
+    if (file.exists(rulesFile)) {
+      rules <- read.table(rulesFile, sep = "\t", header = TRUE,
+                          colClasses = "character", quote = "")
+      rules <- rules[, c(patterns, replacements), drop = FALSE]
+    } else {
+      rules  <- NULL
+    }
+    
+    # return orthography profile as a list of two
+    return( list(graphs = graphs, rules = rules) )
   }
-
-  # prepare rules
-  rulesFile <- paste(filename, ".rules", sep = "")
-  if (file.exists(rulesFile)) {
-    rules <- read.table(rulesFile, sep = "\t", header = TRUE,
-                        colClasses = "character", quote = "")
-    rules <- rules[, c(patterns, replacements), drop = FALSE]
-  } else {
-    rules  <- NULL
-  }
-  
-  # return orthography profile as a list of two
-  return( list(graphs = graphs, rules = rules) )
 }
