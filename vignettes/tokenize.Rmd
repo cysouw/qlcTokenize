@@ -4,7 +4,7 @@ author: "Michael Cysouw"
 date: '`r Sys.Date()`'
 mainfont: Charis SIL
 output:
-#  rmarkdown::html_vignette:
+  rmarkdown::html_vignette:
   md_document:
     variant: markdown_github
   pdf_document:
