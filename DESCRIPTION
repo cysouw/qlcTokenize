@@ -9,5 +9,5 @@ Description: An easy-to-use interface for various Unicode functionality for proc
 License: GPL-3
 Depends: stringi (>= 0.2-5)
 Encoding: UTF-8
-Suggests: knitr
+Suggests: knitr, testthat
 VignetteBuilder: knitr
