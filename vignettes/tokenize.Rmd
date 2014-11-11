@@ -6,11 +6,11 @@ mainfont: Charis SIL
 monofont: Menlo
 output:
   rmarkdown::html_vignette:
-#  md_document:
-#    variant: markdown_github
-#  pdf_document:
-#    number_sections: yes
-#    latex_engine: xelatex
+  md_document:
+    variant: markdown_github
+  pdf_document:
+    number_sections: yes
+    latex_engine: xelatex
 vignette: >
   %\VignetteIndexEntry{Specifying orthography}
   \usepackage[utf8]{inputenc}

@@ -1,7 +1,8 @@
 context("Tokenization")
 
-example1 <- c("this is", "a test")
-out <- tokenize(example1)
+# basic structure of tokenize function
+example <- c("this is", "a test")
+out <- tokenize(example)
 
 test_that("output structure", {
   expect_equal(length(out), 3)
@@ -16,8 +17,9 @@ test_that("output", {
   expect_equal(out$warnings, NULL)
 })
 
+# changing profile as R object and using such a prfile
 profile <- as.data.frame(rbind(as.matrix(out$orthography.profile),c("th","","","","")))
-out2 <- tokenize(example1, orthography.profile = profile)
+out2 <- tokenize(example, orthography.profile = profile)
 
 test_that("using profile", {
   expect_equal(as.character(out2$strings$tokenized), 
@@ -33,3 +35,20 @@ test_that("getting errors on missing characters", {
   
 })
 
+# testing writing and reading profile files
+write.orthography.profile("thing", file = "thing.prf")
+cat("th\nng\n", file = "thing.prf", append = TRUE)
+profile <- read.orthography.profile("thing")
+out3 <- tokenize("thing",orthography.profile = "thing.prf")
+
+test_that("structure of reading profile from disk", {
+  expect_equal(length(profile), 2)
+  expect_equal(names(profile)[1], "graphs")
+  expect_equal(names(profile)[2], "rules")
+})
+
+test_that("using manually changed profile from disk", {
+  expect_equal(as.character(out3$strings$tokenized), "th i ng")
+})
+
+file.remove("thing.prf")
