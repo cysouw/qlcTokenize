@@ -13,7 +13,7 @@ write.orthography.profile(strings,
   replacements = TRUE, sep = NULL, file = NULL, info = TRUE)
 
 read.orthography.profile(file, 
-  graphemes = "graphemes", patterns = "patterns",  replacements = "replacements")
+  graphemes = "graphemes",  replacements = "replacements")
 }
 \arguments{
   \item{strings}{
@@ -21,9 +21,6 @@ read.orthography.profile(file,
   }
   \item{graphemes}{
   name (or number) of the column in the orthography profile listing the graphemes to be used for the tokenization. 
-  }
-  \item{patterns}{
-  name (or number) of the column in the rules file (if any) listing the pattern to be matched.
   }
   \item{replacements}{
   for writing profiles: logical (should a column with replacements be added?). For reading profiles:string with name (or number) of the column in the orthography profile listing the replacements. 
@@ -41,12 +38,12 @@ read.orthography.profile(file,
 \details{
 To produce an orthography profile, consider using \code{write.orthography.profile} to produce a useful starting point. This function will take a vector of strings and produce a table with all graphemes and their frequency. Combining diacritics and spacing modifier letters are combined with their preceding characters to obtain a reasonable first guess at available graphemes. There is no attempt made to recognize 'tailored' multigraphs (like 'sch' of 'aa'). Such multigraphs can be specified manually in the output file of this function.
 
-The function \code{read.orthography.profile} can be used to read any saved orthography profile into R, though mostly this function will be used internally by \code{tokenize}. An orthography profile currently consists of minimally a csv-table with a column of graphemes to be separated, typically using a \code{.prf} suffix. Further columns with replacements can be specified. When further rule-based changes are needed (for complex orthographic regularities), these can be specified as regex 'pattern' and 'replacement' in a separate csv-file with the same name, but using a \code{.rules} suffix.
+The function \code{read.orthography.profile} can be used to read any saved orthography profile into R, though mostly this function will be used internally by \code{tokenize}. An orthography profile currently consists of minimally a tab-separated table with a column of graphemes to be separated, typically using a \code{.prf} suffix. Further columns with replacements can be specified. When further rule-based changes are needed (for complex orthographic regularities), these can be specified as regex 'pattern' and 'replacement' in a separate 2-column tab-separated file with the same name, but using a \code{.rules} suffix.
 }
 \value{
 \code{write.orthography.profile} produces a dataframe with all grapheme(-clusters) and frequencies. By default, a column 'replacements' is added, which is identical to the graphemes. This column is a useful starting point to specify orthographic changes to be used by \code{tokenize}. Also by default the Unicode codepoints and names are added to make it easier to find encoding inconsistencies in the provided data. When \code{file} is specified, the profile will be written to this file.
 
-\code{read.orthography profile} reads a profile from disk, possible also included any specified rules file.
+\code{read.orthography profile} reads a profile from disk, possible also included any rules file.
 }
 \author{
 Michael Cysouw

@@ -19,6 +19,8 @@ write.orthography.profile <- function(strings, replacements = TRUE, sep = NULL, 
     splitted <- stri_split_boundaries(strings, boundary = "character")
   } else {
     splitted <- strsplit(strings, sep)
+    # remove empty characters
+    splitted <- sapply(splitted, function(x){x[x != ""]}, simplify = FALSE)
   }
     
   # prepare result
@@ -63,10 +65,7 @@ write.orthography.profile <- function(strings, replacements = TRUE, sep = NULL, 
 # read orthography profile
 # ========================
 
-read.orthography.profile <- function(file, 
-                                     graphemes = "graphemes", 
-                                     patterns = "patterns", 
-                                     replacements = "replacements") {
+read.orthography.profile <- function(file, graphemes = "graphemes", replacements = "replacements") {
 
   # when "file" is an R object
   if (!is.character(file)) {
@@ -75,7 +74,11 @@ read.orthography.profile <- function(file,
       return (file)
     } else if (is.data.frame(file)) {
       # assume that it is a dataframe with graphemes
-      graphs <- file[,c(graphemes, replacements), drop = FALSE]
+      if (ncol(file) > 1) {
+        graphs <- file[,c(graphemes, replacements), drop = FALSE]
+      } else {
+        graphs <-  file
+      }
       rules <-  NULL
       return( list(graphs = graphs, rules = rules) )
     } else {
@@ -96,7 +99,9 @@ read.orthography.profile <- function(file,
     if (file.exists(graphemesFile)) {
       graphs <- read.table(graphemesFile, sep = "\t", header = TRUE, 
                        colClasses = "character", quote = "", fill = TRUE)
-      graphs <- graphs[, c(graphemes, replacements), drop = FALSE]
+      if (ncol(graphs) > 1) {
+        graphs <- graphs[, c(graphemes, replacements), drop = FALSE]
+      }
     } else {
       graphs = NULL
     }
@@ -104,9 +109,8 @@ read.orthography.profile <- function(file,
     # prepare rules
     rulesFile <- paste(filename, ".rules", sep = "")
     if (file.exists(rulesFile)) {
-      rules <- read.table(rulesFile, sep = "\t", header = TRUE,
+      rules <- read.table(rulesFile, sep = "\t", header = FALSE,
                           colClasses = "character", quote = "")
-      rules <- rules[, c(patterns, replacements), drop = FALSE]
     } else {
       rules  <- NULL
     }

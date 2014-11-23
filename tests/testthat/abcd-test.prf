@@ -1,0 +1,10 @@
+# artificial test to catch a potential problem to be solved with rules
+# "abcd" should be tokenized into "ab cd" and not in "a bcd"
+# (which should give an error without rules because there is no "a" in the profile!)
+
+graphemes
+ab
+cd
+bcd
+bb
+bbc

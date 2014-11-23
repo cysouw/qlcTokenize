@@ -1,12 +1,14 @@
-
 # ================
 # tokenize strings
 # ================
 
-tokenize <- function(strings, orthography.profile = NULL, replace = FALSE,
-                graphemes = "graphemes", patterns = "patterns", replacements = "replacements",
-                sep = "\u00B7", normalize = "NFC", 
-                space.replacement = TRUE, file = NULL) {
+tokenize <- function(strings, orthography.profile = NULL
+                     , replace = FALSE
+                     , graphemes = "graphemes", replacements = "replacements"
+                     , sep = "\u00B7"
+                     , normalize = "NFC"
+                     , space.replacement = TRUE
+                     , file = NULL) {
   
   # normalization
   if (normalize == "NFC" | normalize == "nfc") {
@@ -27,92 +29,113 @@ tokenize <- function(strings, orthography.profile = NULL, replace = FALSE,
     graphs  <- write.orthography.profile(strings, info = FALSE)
     profile <- list(graphs = graphs, rules = NULL)    
   } else {
-    # read profile from file or try to interpret "file" as R object
+    # read profile from file
     profile <- read.orthography.profile(orthography.profile
                                         , graphemes
-                                        , patterns
                                         , replacements)
-  }
-
+    # when there is no prf-file, make a default profile
+    if(is.null(profile$graphs)) {
+      profile$graphs <- write.orthography.profile(strings, info = FALSE)
+    }
+  } 
+  
   # do grapheme-splitting
-  if(!is.null(profile$graphs)) {
-    # normalise characters in profile, just to be sure
-    graphs <- transcode(profile$graphs[,graphemes])
-    
-    # possibly add space to graphs
-    if (space.replacement) { graphs <- c(" ", graphs) }
-    
-    # order graphs to size
-    graphs_parts <- strsplit(graphs, split = "")
-    graphs_length <- sapply(graphs_parts, length)
-    graph_order <- order(graphs_length, decreasing = TRUE)
-    
-    # check for missing graphems in orthography profile
-    # and take care of multigraphs
-    # just take some high unicode range 
-    # and replace all graphemes with individual characters
-    check <- strings
-    for (i in graph_order) { 
-      check <- gsub(graphs[i],"",check, fixed = TRUE)
-      strings <- gsub(pattern = graphs[i]
-                      , replacement = intToUtf8(1110000 + i)
-                      , strings, fixed = TRUE)    
-    }
-    
-    # check for missing graphems in orthography profile and produce warning
-    check <- stri_replace_all_regex(check, "(\\p{DIACRITIC})", " $1")
-    leftover <- check != ""
-    if (sum(leftover) > 0) {
-      warning("There are characters in the data that are not in the orthography profile. Check warnings for a table with all problematic strings.")
-      problems <- cbind(originals[leftover],check[leftover])
-      colnames(problems) <- c("original strings","unmatched parts")
-      rownames(problems) <- which(leftover)
-    }
-    
-    # parse strings
-    # and put them back with separator
-    strings <- strsplit(strings, split = "")  
-    strings <- sapply(strings, function(x){paste(x, collapse = sep)})
-    
-    # replace orthography if specified
-    if (replace) {
-      graphs <- profile$graphs[,replacements]
-      graphs <- transcode(graphs)
-      graphs[graphs == "NULL"] <- ""
-      # possibly add space to graphs
-      if (space.replacement) { graphs <- c(" ", graphs) }
-    }
-    
-    # put back the multigraphs-substitution characters
-    for (i in graph_order) {
-      strings <- gsub(pattern = intToUtf8(1110000 + i)
-                      , replacement = graphs[i]
-                      , strings, fixed = TRUE)
-    }
-    
-    # remove superfluous spaces at start and end
-    strings <- gsub(pattern = paste("^", sep, sep = ""), replacement = "", strings)
-    strings <- gsub(pattern = paste(sep, "$", sep = ""), replacement = "", strings)
-    
-  } else {
-    # with no graphemes-specified, nothing is parsed
-    # also no error message returned
-    leftover <- 0
+
+  # normalise characters in profile, just to be sure
+  graphs <- transcode(profile$graphs[,graphemes])
+  
+  # possibly add space to graphs
+  if (space.replacement) { graphs <- c(" ", graphs) }
+  
+  # order graphs to size
+  graphs_parts <- strsplit(graphs, split = "")
+  graphs_length <- sapply(graphs_parts, length)
+  graph_order <- order(graphs_length, decreasing = TRUE)
+  
+  # replace strings by random unicode range in order of size of grapheme clusters
+  for (i in graph_order) { 
+    strings <- gsub(pattern = graphs[i]
+                    , replacement = intToUtf8(1110000 + i)
+                    , strings, fixed = TRUE)    
   }
   
-  # make traditional output when asked
-  if (space.replacement){
-    strings <- gsub(" ","#",strings)
-    strings <- gsub(sep," ",strings)
-    sep <- " # | "
+  # parse strings now is easy, because every grapheme is one unicode character
+  strings <- strsplit(strings, split = "") 
+  
+  # and put them back with separator
+  strings <- sapply(strings, function(x){paste(x, collapse = sep)})
+  
+  # put back the multigraphs-substitution characters
+  for (i in graph_order) {
+    strings <- gsub(pattern = intToUtf8(1110000 + i)
+                    , replacement = graphs[i]
+                    , strings, fixed = TRUE)
   }
   
-  # apply regexes when specified in the orthography profile
+  # apply rules when specified in the orthography profile
   if(!is.null(profile$rules)) {
     for (i in 1:nrow(profile$rules) ) {
       regex <- transcode(as.character(profile$rules[i,]))
+      regex <- gsub(pattern = " ", replacement = sep, regex)
       strings <- gsub(pattern = regex[1], replacement = regex[2], strings)
     }
+  }
+  
+  # check for missing graphems in orthography profile
+  # and take care of replacements
+  # implementation: just again take some high unicode range 
+  # and replace all graphemes with individual characters
+  check <- strings
+  for (i in graph_order) { 
+    check <- gsub(graphs[i],"",check, fixed = TRUE)
+    strings <- gsub(pattern = graphs[i]
+                    , replacement = intToUtf8(1110000 + i)
+                    , strings, fixed = TRUE)    
+  }
+  
+  # check for missing graphems in orthography profile and produce warning
+  # first remove separators
+  check <- gsub(paste(sep, "+", sep = ""), "", check)
+  # remember unique problem characters
+  problem.characters <- unique(unlist(strsplit(check, "")))
+  # add spaces to show lone diacritics
+  check <- stri_replace_all_regex(check, "(\\p{DIACRITIC})", " $1")
+  # where are leftover characters?
+  leftover <- check != ""
+  # prepare error message
+  if (sum(leftover) > 0) {
+    warning(paste("\nThe character(s):\n", paste(problem.characters, collapse = " "), "\nare found in the input data, but are not in the orthography profile.\nCheck output$warnings for a table with all problematic strings."))
+    problems <- cbind(originals[leftover],check[leftover])
+    colnames(problems) <- c("original strings","unmatched parts")
+    rownames(problems) <- which(leftover)
+  }
+
+  # replace orthography if specified
+  if (replace) {
+    
+    # replace problem characters with questionmark in tokenization
+    for (i in problem.characters) {
+      strings <- gsub(i, "?", strings)
+    }
+    
+    # use replacement graphs to put back
+    graphs <- profile$graphs[,replacements]
+    graphs <- transcode(graphs)
+    graphs[graphs == "NULL"] <- ""
+  }
+  
+  # put back the multigraphs-substitution characters
+  for (i in graph_order) {
+    strings <- gsub(pattern = intToUtf8(1110000 + i)
+                    , replacement = graphs[i]
+                    , strings, fixed = TRUE)
+  }
+ 
+  # make traditional output when asked (done by default)
+  if (space.replacement){
+    strings <- gsub(" ","#",strings)
+    strings <- gsub(sep," ",strings)
+    sep <- " # | #|# | "
   }
   
   # prepare results
@@ -175,4 +198,3 @@ tokenize <- function(strings, orthography.profile = NULL, replace = FALSE,
 
 # alternative name of function
 tokenise <- tokenize
-

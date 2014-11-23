@@ -1,0 +1,3 @@
+# rule specifying that the tailored grapheme cluster "an" should not be a cluster when followed by vowels
+
+an ([ae])	a n \1

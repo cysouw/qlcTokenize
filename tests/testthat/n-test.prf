@@ -1,0 +1,15 @@
+# Test inspired by orthography of the Witotoan language ... as used in ...
+
+# The problem in this orthography is that the character "n" has two different interpretations
+# when used between vowels, then the "n" is a separate phoneme (alveolar nasal)
+# when used after a vowel, but before a consonant, than the "n" signifies nasalisation of the preceding vowel
+# This is codified here by specifying a tailored grapheme cluster "an"
+# However, this cluster has to be ignored when a vowel follows, as specified in the rules file.
+
+graphemes	replacements
+a	a
+e	e
+n	n
+t	t
+an	ã
+
