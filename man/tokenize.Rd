@@ -12,7 +12,7 @@ This function is the main function to produce, test and apply orthography profil
 }
 \usage{
 tokenize(strings, orthography.profile = NULL, replace = FALSE,
-  graphemes = "graphemes", patterns = "patterns", replacements = "replacements",
+  graphemes = "graphemes", replacements = "replacements",
   sep = "\u00B7", normalize = "NFC", 
   space.replacement = TRUE, file = NULL)
 }
@@ -28,9 +28,6 @@ tokenize(strings, orthography.profile = NULL, replace = FALSE,
   }
   \item{graphemes}{
   name (or number) of the column in the orthography profile listing the graphemes to be used for the tokenization. Defaults to "graphemes"
-  }
-  \item{patterns}{
-  name (or number) of the column in the orthography profile listing the patterns to be used for the regular expressions that can optionally be used after base-tokenisation. Defaults to "patterns"
   }
   \item{replacements}{
   name (or number) of the column in the orthography profile listing the replacements. Defaults to "replacements"
