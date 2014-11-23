@@ -13,6 +13,7 @@ This is an early alpha version, not yet available on CRAN. However, it is pretty
 There is a vignette trying to explain the intended usage of this package. Unfortunately, the vignette will not by build when you install this package. You can try the following, but it will probably throw an error:
 
     devtools::install_github("cysouw/qlcTokenize", build_vignettes = TRUE)
+    vignette("tokenize")
 
 In the meantime, you can read the vignette directly here on github by looking in the folder "vignettes" above, using the files with suffix ".md".
 
