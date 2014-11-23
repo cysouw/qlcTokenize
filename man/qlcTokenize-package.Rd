@@ -12,11 +12,11 @@ This packages uses a general approach to describe orthographic systems through s
 \tabular{ll}{
 Package: \tab qlcTokenize\cr
 Type: \tab Package\cr
-Version: \tab 0.1\cr
-Date: \tab 2014-10-28\cr
+Version: \tab 0.2\cr
+Date: \tab 2014-11-23\cr
 License: \tab GPL-3\cr
 }
-# ~~ An overview of how to use the package, including the most important functions ~~
+The central function is \code{\link{tokenize}}. See also the vignette \code{tokenize} for a basic introduction of the intended usage.
 }
 \author{
 Michael Cysouw <cysouw@mac.com>
