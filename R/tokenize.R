@@ -3,11 +3,10 @@
 # ================
 
 tokenize <- function(strings, orthography.profile = NULL
-                     , replace = FALSE
+                     , transliterate = FALSE
                      , graphemes = "graphemes", replacements = "replacements"
-                     , sep = "\u00B7"
+                     , sep = " ", sep.replacement = "#"
                      , normalize = "NFC"
-                     , space.replacement = TRUE
                      , file = NULL) {
   
   # normalization
@@ -45,7 +44,9 @@ tokenize <- function(strings, orthography.profile = NULL
   graphs <- transcode(profile$graphs[,graphemes])
   
   # possibly add space to graphs
-  if (space.replacement) { graphs <- c(" ", graphs) }
+  # if (space.replacement) { graphs <- c(" ", graphs) }
+  
+  # replace separator, if necessary
   
   # order graphs to size
   graphs_parts <- strsplit(graphs, split = "")
@@ -56,7 +57,10 @@ tokenize <- function(strings, orthography.profile = NULL
   for (i in graph_order) { 
     strings <- gsub(pattern = graphs[i]
                     , replacement = intToUtf8(1110000 + i)
-                    , strings, fixed = TRUE)    
+                    , strings
+                    , perl = TRUE
+                  #  , fixed = TRUE
+                    )    
   }
   
   # parse strings now is easy, because every grapheme is one unicode character
@@ -68,8 +72,10 @@ tokenize <- function(strings, orthography.profile = NULL
   # put back the multigraphs-substitution characters
   for (i in graph_order) {
     strings <- gsub(pattern = intToUtf8(1110000 + i)
-                    , replacement = graphs[i]
-                    , strings, fixed = TRUE)
+                    , replacement = sub(graphs[i], "\\1"
+                    , strings
+                    , fixed = TRUE
+                    )
   }
   
   # apply rules when specified in the orthography profile
@@ -90,7 +96,10 @@ tokenize <- function(strings, orthography.profile = NULL
     check <- gsub(graphs[i],"",check, fixed = TRUE)
     strings <- gsub(pattern = graphs[i]
                     , replacement = intToUtf8(1110000 + i)
-                    , strings, fixed = TRUE)    
+                    , strings
+                    , perl = TRUE
+                  #  , fixed = TRUE
+                    )    
   }
   
   # check for missing graphems in orthography profile and produce warning
@@ -128,7 +137,10 @@ tokenize <- function(strings, orthography.profile = NULL
   for (i in graph_order) {
     strings <- gsub(pattern = intToUtf8(1110000 + i)
                     , replacement = graphs[i]
-                    , strings, fixed = TRUE)
+                    , strings
+                    , perl = TRUE
+                   # , fixed = TRUE
+                    )
   }
  
   # make traditional output when asked (done by default)
