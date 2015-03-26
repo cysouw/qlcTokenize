@@ -11,10 +11,11 @@ To process strings it is often very useful to tokenise them into graphemes (i.e.
 This function is the main function to produce, test and apply orthography profiles.
 }
 \usage{
-tokenize(strings, orthography.profile = NULL, replace = FALSE,
+tokenize(strings, orthography.profile = NULL, transliterate = FALSE,
   graphemes = "graphemes", replacements = "replacements",
-  sep = "\u00B7", normalize = "NFC", 
-  space.replacement = TRUE, file = NULL)
+  sep = " ", sep.replacement = "#",
+  normalize = "NFC", use.size.order = TRUE,
+  global.match = TRUE, file = NULL)  
 }
 \arguments{
   \item{strings}{
@@ -23,8 +24,8 @@ tokenize(strings, orthography.profile = NULL, replace = FALSE,
   \item{orthography.profile}{
   orthography profile specifying the graphemes for the tokenization, and possibly any replacements of the available graphemes. Can be a filename or an object as returned by \code{read.orthography.profile}. If NULL then the orthography profile will be created on the fly using the defaults of \code{write.orthography.profile}.
   }
-  \item{replace}{
-  logical: should orthographic replacement be performed after tokenization. Defaults to FALSE.
+  \item{transliterate}{
+  logical: should orthographic transliteration be performed after tokenization. Defaults to FALSE.
   }
   \item{graphemes}{
   name (or number) of the column in the orthography profile listing the graphemes to be used for the tokenization. Defaults to "graphemes"
@@ -33,13 +34,19 @@ tokenize(strings, orthography.profile = NULL, replace = FALSE,
   name (or number) of the column in the orthography profile listing the replacements. Defaults to "replacements"
   }
   \item{sep}{
-  separator to be inserted between graphemes. Defaults to U+00B7 ("MIDDLE DOT"). In the default setting, the usage of this separator remains invisible to the user. However, when \code{space.replacement = FALSE}, then this separator becomes visible in the output.
+  separator to be inserted between graphemes. Defaults to space. 
+  }
+  \item{sep.replacement}{
+  if the specified separator (by default: space) already occurs in the data, what should it be replaced with (by default: hash) ?
   }
   \item{normalize}{
   which normalization to use, defaults to "NFC". Other option is "NFD". Any other input will result in no normalisation being performed.
   }
-  \item{space.replacement}{
-  logical, defaults to TRUE. When TRUE, then spaces in the original string are not included in the orthography profile, but treated as word boundaries. then the tokenized strings are presented with spaces between graphemes and space-hash-space (\code{" # "}) instead of spaces between words in the original strings. When FALSE, spaces in the original strings are treated as regular characters, and the separator (see above) is used as character to mark the tokenization.
+  \item{use.size.order}{
+  by default graphemes will be identified largest first. If FALSE then the order as specified in the orthography profile will be used.
+  }
+  \item{global.match}{
+  how should the tokenization be performed. By default, use global match, i.e. each grapheme will be replaced throughout the whole string before the next grapheme is taken up. If FALSE, then the replacements will be performed along each string, similar in result to a finite state transducer, i.e. which grapheme matches the start, then proceed along the string.
   }
   \item{file}{
   filename for results to be written. No suffix should be specified, as various different files with different suffixes are produced.
@@ -51,7 +58,7 @@ The \code{tokenize} function will tokenize (and possibly replace, i.e. translite
 \value{
 Without specificatino of \code{file}, the function \code{tokenize} will return a list of three:
 \item{strings}{the vector with the parsed strings}
-\item{orthography.profile}{}
+\item{profile}{a dataframe with the graphemes and some more information}
 \item{warnings}{a table with all original strings and the unmatched parts}
 
 When \code{file} is specified, these three tables will be written to three different files, \code{file.txt} for the strings, \code{file.prf} for the orthrography profile, and \code{file_warnings.txt} for the warnings. Note that when replacements are made (i.e. when \code{replace = TRUE}), then no orthography profile is produced. Likewise, when there are not warnings, then no file with warning is produced.
@@ -66,7 +73,15 @@ colnames(gr) <- c("graphemes","replacements")
 ( op <- list(graphs = gr, rules = NULL) )
 
 # tokenization
-tokenize(c("nana", "änngschä", "ach"), op, graphemes = "graphemes")
+tokenize(
+    c("nana", "änngschä", "ach")
+    , op
+    , graphemes = "graphemes")
+    
 # with replacements and an error message
-tokenize(c("Naná", "änngschä", "ach"), op, graphemes = "graphemes", replacements = "replacements")
+tokenize(
+    c("Naná", "änngschä", "ach")
+    , op
+    , graphemes = "graphemes"
+    , replacements = "replacements")
 }

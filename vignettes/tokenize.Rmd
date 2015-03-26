@@ -123,7 +123,7 @@ tokenize(test, file="test")
 We are going to add two new "tailored grapheme clusters" to the profile: open the file "test.prf" (in the folder "tokenize" on your Desktop) with a text editor like Textmate, Textwrangler or Notepad++ (don't use Microsoft Word!!!). First, add a new line with only "th" on it and, second, add another line with only "ng" on it. The file will then roughly look like this:
 
 ```{r, echo = FALSE, results='asis'}
-tmp <- as.data.frame(rbind(as.matrix(tokenize(test)$o),c("th"," "," "," "," "),c("ng"," "," "," "," ")))
+tmp <- as.data.frame(rbind(as.matrix(tokenize(test)$p),c("th"," "," "," "," "),c("ng"," "," "," "," ")))
 knitr::kable(tmp)
 ```
 

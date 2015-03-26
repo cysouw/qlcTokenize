@@ -5,7 +5,8 @@
 # write orthography profile with frequencies for further processing
 # =================================================================
 
-write.orthography.profile <- function(strings, replacements = TRUE, sep = NULL, file = NULL, info = TRUE) {
+write.orthography.profile <- function(strings, 
+      replacements = TRUE, sep = NULL, file = NULL, info = TRUE) {
   
   # prepare naming of file
   if (!is.null(file)) {
@@ -14,7 +15,8 @@ write.orthography.profile <- function(strings, replacements = TRUE, sep = NULL, 
     }
   }
   
-  # split using unicode definitions, except when 'sep' is specified, then split by sep
+  # split using unicode definitions
+  # except when 'sep' is specified, then split by sep
   if (is.null(sep)) {
     splitted <- stri_split_boundaries(strings, boundary = "character")
   } else {
@@ -30,20 +32,25 @@ write.orthography.profile <- function(strings, replacements = TRUE, sep = NULL, 
   # add a column for editing replacements when 'replacements = TRUE'
   if (replacements) {
     result <- cbind(chars, chars, summary)
-    colnames(result) <- colnames(result) <- c("graphemes", "replacements", "frequency")
+    colnames(result) <- colnames(result) <- c("graphemes", 
+                                              "replacements", 
+                                              "frequency")
   } else {
     result <- cbind(chars, summary)
-    colnames(result) <- colnames(result) <- c("graphemes", "frequency")   
+    colnames(result) <- colnames(result) <- c("graphemes", 
+                                              "frequency")   
   }
   rownames(result) <- NULL
 
   # add codepoints and Unicode names when info = TRUE
   if (info) {    
     codepoints <- sapply(chars, function(x) {
-      paste(stri_trans_general(unlist(strsplit(x,"")), "Any-Hex/Unicode"), collapse = ", ")
+      paste(stri_trans_general(unlist(strsplit(x,"")), "Any-Hex/Unicode")
+            , collapse = ", ")
     })
     names <- sapply(chars, function(x) {
-      paste(stri_trans_general(unlist(strsplit(x,"")), "Any-Name"), collapse = ", ")
+      paste(stri_trans_general(unlist(strsplit(x,"")), "Any-Name")
+            , collapse = ", ")
     })
     names <- gsub("\\N{", "", names, fixed= TRUE)
     names <- gsub("}", "", names, fixed = TRUE)
@@ -65,7 +72,8 @@ write.orthography.profile <- function(strings, replacements = TRUE, sep = NULL, 
 # read orthography profile
 # ========================
 
-read.orthography.profile <- function(file, graphemes = "graphemes", replacements = "replacements") {
+read.orthography.profile <- function(file, 
+      graphemes = "graphemes", replacements = "replacements") {
 
   # when "file" is an R object
   if (!is.character(file)) {
