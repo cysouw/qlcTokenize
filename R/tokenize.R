@@ -5,10 +5,39 @@
 tokenize <- function(strings, orthography.profile = NULL
                      , transliterate = FALSE
                      , graphemes = "graphemes", replacements = "replacements"
-                     , sep = " ", sep.replacement = "#"
-                     , normalize = "NFC", use.size.order = TRUE
-                     , global.match = TRUE
+                     , sep = " ", sep.replacement = "#", missing = "\u2047"
+                     , normalize = "NFC"
+                     , size.order = TRUE, context = FALSE, global.match = TRUE
                      , file = NULL) {
+
+  # --------------------------------------------
+  # help functions to deal with regex characters
+  # --------------------------------------------
+  
+  regexchars <- c(".","|","(",")","[","]","{","}","^","$","*","+","?")
+  
+  replace.regex <- function(x) {  
+    for (i in 1:length(regexchars)) {
+      x <- gsub(regexchars[i]
+                , intToUtf8(1110000 + i)
+                , x
+                , fixed = TRUE
+                )
+    }
+    return(x)
+  }
+  
+  restore.regex <- function(x) {
+    for (i in 1:length(regexchars)) {
+      x <- gsub(pattern = intToUtf8(1110000 + i)
+                , replacement = regexchars[i]
+                , x
+                , fixed = TRUE
+                )
+    }
+    return(x)
+  }
+   
   # ---------------
   # preprocess data
   # ---------------
@@ -26,15 +55,12 @@ tokenize <- function(strings, orthography.profile = NULL
     transcode <- identity
   }
   
-  # prepare strings, and normalize NFC everything by default
+  # keep original strings, and normalize NFC everything by default
   originals <- as.vector(strings)
   strings <- transcode(originals)
 
-  # remove regex special characters in profile
-  regexchars <- c(".","|","(",")","[","]","{","}","^","$","*","+","?")
-  for (i in 1:length(regexchars)) {
-    strings <- gsub(regexchars[i], intToUtf8(1110000 + i), strings, fixed = TRUE)
-  }
+  # replace regex special characters in strings
+  strings <- replace.regex(strings)
  
   # --------------------
   # read or make profile
@@ -47,10 +73,19 @@ tokenize <- function(strings, orthography.profile = NULL
     profile <- list(graphs = graphs, rules = NULL)    
   } else {
     # read profile from file
-    profile <- read.orthography.profile(orthography.profile
+    if (context) {
+      profile <- read.orthography.profile(orthography.profile
+                                          , graphemes
+                                          , replacements
+                                          , left.context = "left"
+                                          , right.context = "right")  
+    } else {
+      profile <- read.orthography.profile(orthography.profile
                                         , graphemes
-                                        , replacements)
-    # when there is no prf-file, make a default profile
+                                        , replacements)  
+    }
+    # when there is no prf-file (i.e. there is only a rules file), 
+    # then make a default profile
     if(is.null(profile$graphs)) {
       profile$graphs <- write.orthography.profile(strings, info = FALSE)
     }
@@ -60,17 +95,21 @@ tokenize <- function(strings, orthography.profile = NULL
   graphs <- transcode(profile$graphs[,graphemes])
   
   # order graphs to size
-  if (use.size.order) {
+  if (size.order) {
     graphs_parts <- strsplit(graphs, split = "")
     graphs_length <- sapply(graphs_parts, length)
     graph_order <- order(graphs_length, decreasing = TRUE)
   } else {
     graph_order <- 1:length(graphs)
   }
+
+  # replace regex special characters in profile
+  # this might be necessary when a external file with a profile is used
+  graphs <- replace.regex(graphs)
   
-  # -------------------------------------------------
-  # tokenize data, either global or along the strings
-  # -------------------------------------------------
+  # --------------------------------------------------
+  # tokenize data, either global when global.match = T
+  # --------------------------------------------------
   
   if (global.match) {
     
@@ -98,13 +137,13 @@ tokenize <- function(strings, orthography.profile = NULL
                       )
     }
     
+  # -------------------------------------------------------
+  # finite-state transducer behaviour when global.match = F
+  # -------------------------------------------------------
+    
   } else {
-    
-    # -------------------------------------------------------------
-    # finite-state transducer behaviour when "global.match = FALSE"
-    # -------------------------------------------------------------
-    
-    # order graphs by size and add start regex
+        
+    # order graphs by size and add start-of-string regex
     gr <- paste("^", graphs[graph_order], sep = "")
     
     # the actual attempt to implement a transducer using simple loops
@@ -129,60 +168,110 @@ tokenize <- function(strings, orthography.profile = NULL
     
     strings <- sapply(strings,make.tokens)
     names(strings) <- NULL
+    
   }
-
-  # ---------------
-  # post processing
-  # ---------------  
   
-  # put back regexchars
-  for (i in 1:length(regexchars)) {
-    strings <- gsub(intToUtf8(1110000 + i), regexchars[i], strings, fixed = TRUE)
-    graphs <- gsub(intToUtf8(1110000 + i), regexchars[i], graphs, fixed = TRUE)
-  }
+  # ------------------
+  # tokenization rules
+  # ------------------
   
   # apply rules when specified in the orthography profile
   if(!is.null(profile$rules)) {
+    
+    # put back regexchars: user will have to take care for them in their regexes
+    strings <- restore.regex(strings)
+    graphs <- restore.regex(graphs)
+    
+    # do the tokenization rules
     for (i in 1:nrow(profile$rules) ) {
       regex <- transcode(as.character(profile$rules[i,]))
-      regex <- gsub(pattern = " ", replacement = sep, regex)
-      strings <- gsub(pattern = regex[1], replacement = regex[2], strings)
-    }
+      regex <- gsub(pattern = user.sep
+                    , replacement = sep
+                    , regex
+                    , fixed = TRUE
+                    )
+      strings <- gsub(pattern = regex[1]
+                      , replacement = regex[2]
+                      , strings
+                      , perl = TRUE
+                      )
+      }
+    
+    # again replace regex special characters in strings and graphs
+    strings <- replace.regex(strings)
+    graphs <- replace.regex(graphs)
+    
   }
   
   # -------------------------------------------------    
   # check for missing graphems in orthography profile
   # -------------------------------------------------
   
+  # prepare regexes with context from profile
+  
+  start <- paste("(?<=^|", sep, ")", sep = "")
+  end <- paste("(?=", sep, "|$)", sep = "")
+  
+  if (context) {
+  
+    left <- transcode(profile$graphs[,"left"])
+    right <- transcode(profile$graphs[,"right"])
+    left[left != ""] <- paste("(?<=", left[left != ""], sep, ")", sep = "")
+    right[right != ""] <- paste("(?=",  sep, right[right != ""], ")", sep = "")
+    contexts <- paste(start, left, graphs, right, end, sep = "")
+    
+  } else {
+    contexts <- paste (start, graphs, end, sep = "")
+  }
+    
+  # order contexts to size to get complex regexes firts
+  context_parts <- strsplit(contexts, split = "")
+  context_length <- sapply(context_parts, length)
+  context_order <- order(context_length, decreasing = TRUE)
+  
   # implementation: just again take some high unicode range 
   # and replace all graphemes with individual characters
+  # while checking for remainders
   check <- strings
-  for (i in graph_order) { 
-    check <- gsub(graphs[i],"",check, fixed = TRUE)
-    strings <- gsub(pattern = graphs[i]
+  for (i in context_order) { 
+    check <- gsub(pattern = contexts[i]
+                  , replacement = ""
+                  , check
+                  , perl = T
+                  )
+    strings <- gsub(pattern = contexts[i]
                     , replacement = intToUtf8(1110020 + i)
                     , strings
-                    , fixed = TRUE
+                    , perl = T
                     )    
   }
   
   # check for missing graphems in orthography profile and produce warning
   # first remove separators
   check <- gsub(paste(sep, "+", sep = ""), "", check)
+  
   # remember unique problem characters
   problem.characters <- unique(unlist(strsplit(check, "")))
+  
   # add spaces to show lone diacritics
   check <- stri_replace_all_regex(check, "(\\p{DIACRITIC})", " $1")
+  
   # where are leftover characters?
   leftover <- check != ""
+  
   # prepare error message
   if (sum(leftover) > 0) {
-    warning(paste("\nThe character(s):\n", paste(problem.characters, collapse = " "), "\nare found in the input data, but are not in the orthography profile.\nCheck output$warnings for a table with all problematic strings."))
+    warning(paste("\nThe following character(s):\n"
+                  , paste(problem.characters, collapse = " ")
+                  , "\nare found in the input data, but are not in the orthography profile.\nCheck output$missing for a table with all problematic strings."
+                  ))
     problems <- cbind(originals[leftover],check[leftover])
-    colnames(problems) <- c("original strings","unmatched parts")
+    colnames(problems) <- c("originals","unmatched")
     rownames(problems) <- which(leftover)
+  } else {
+    problems  <- NULL
   }
-
+  
   # --------------------------------
   # replace orthography if specified
   # --------------------------------
@@ -191,7 +280,7 @@ tokenize <- function(strings, orthography.profile = NULL
     
     # replace problem characters with questionmark in tokenization
     for (i in problem.characters) {
-      strings <- gsub(i, "?", strings)
+      strings <- gsub(i, missing, strings)
     }
     
     # use replacement graphs to put back
@@ -199,95 +288,77 @@ tokenize <- function(strings, orthography.profile = NULL
     graphs <- transcode(graphs)
     graphs[graphs == "NULL"] <- ""
   }
-  
-  # put back the multigraphs-substitution characters
-  for (i in graph_order) {
+
+  # ------------------------------------
+  # put back the substitution characters
+  # ------------------------------------
+
+  for (i in context_order) {
     strings <- gsub(pattern = intToUtf8(1110020 + i)
                     , replacement = graphs[i]
                     , strings
+               #    , perl = TRUE
                     , fixed = TRUE
                     )
   }
-
+  
+  # put back regexchars
+  strings <- restore.regex(strings)
+  graphs <- restore.regex(graphs)
+  
   # ---------------
   # prepare results
   # ---------------
 
-  # first: make new profile of actual tokenization
-  profile <- write.orthography.profile(strings, sep = sep, info = TRUE)
-
-  # second: combine orignal strings and tokenized strings in a dataframe
+  # make new profile of actual tokenization
+  if (transliterate) {
+    profile <- write.orthography.profile(strings, replacements = FALSE
+                                         , sep = sep, info = TRUE)
+  } else {
+    profile <- write.orthography.profile(strings, replacements = TRUE
+                                         , sep = sep, info = TRUE)
+  }
+  # remove missing character from profile in case of unmatched transliterations
+  profile <- profile[profile$graphemes != missing,]
+  
+  # insert user specified separator
   strings <- gsub(user.sep, sep.replacement, strings)
   strings <- gsub(sep, user.sep, strings)
+
+  # combine orignal strings and tokenized strings in a dataframe
   tokenization <- as.data.frame(cbind(originals = originals, tokenized = strings))
 
-  # ---------------
-  # output internal
-  # ---------------
+  # --------------
+  # output as list
+  # --------------
   
-  # various options for output
   if (is.null(file)) {
-    # output as R object (list)
+   
+    return(list(  strings = tokenization
+                , profile = profile
+                , missing = problems
+                ))
     
-    if (is.null(orthography.profile)) {
-      # user didn't specify an orthography profile, so give one in return
-      return(list(strings = tokenization
-                  , profile = profile
-                  , warnings =  NULL))
-      
-    } else {
-      if (transliterate) {
-        # with replacements, no orthography profile can be returned in a sensible way
-        if (sum(leftover) == 0 ) {
-          # no errors, just return tokenization
-          return(list(strings = tokenization
-                      , profile = NULL
-                      , warnings = NULL))
-        } else {
-          # with errors, add table with errors
-          return(list(strings = tokenization
-                      , profile = NULL
-                      , warnings = problems))
-        }      
-      } else {        
-        # with OP, but without replacements, 
-        # an orthography profile is returned as well
-        if (sum(leftover) == 0 ) {
-          # no errors, return tokenization and OP
-          return(list(strings = tokenization
-                      , profile = profile
-                      , warnings = NULL))
-        } else { 
-          # with errors, add table with errors
-          return(list(strings = tokenization
-                      , profile = profile
-                      , warnings = problems))
-        } 
-      }
-    }
-    
+  # ---------------
+  # output to files
+  # ---------------
+
   } else {
-    
-    # ---------------
-    # output to files
-    # ---------------
-    
+        
     # file with tokenization is always returned
-    write.table(tokenization
+    write.table(  tokenization
                 , file = paste(file, ".tokenized", sep = "")
                 , quote = FALSE, sep = "\t", row.names = FALSE)
     
-    if (!transliterate) {
-      # additionally write orthography profile when no replacements are made
-      write.table(profile
-                  , file = paste(file, ".prf", sep="")
-                  , quote = FALSE, sep = "\t", row.names =  FALSE)
-    }
+    # file with orthography profile: user has to watch out for overwrite!
+    write.table(  profile
+                , file = paste(file, ".prf", sep="")
+                , quote = FALSE, sep = "\t", row.names =  FALSE)
     
-    if (sum(leftover) > 0 ) {
-      # additionally write table with warnings
-      write.table(problems
-                  , file = paste(file, ".warnings", sep = "")
+    # additionally write table with warnings when they exist
+    if (sum(leftover) > 0 ) {      
+      write.table(  problems
+                  , file = paste(file, ".missing", sep = "")
                   , quote = FALSE, sep = "\t", row.names = FALSE)
     }
   }

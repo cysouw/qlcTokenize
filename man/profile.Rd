@@ -13,7 +13,8 @@ write.orthography.profile(strings,
   replacements = TRUE, sep = NULL, file = NULL, info = TRUE)
 
 read.orthography.profile(file, 
-  graphemes = "graphemes",  replacements = "replacements")
+  graphemes = "graphemes",  replacements = "replacements",
+  left.context = NULL, right.context = NULL)
 }
 \arguments{
   \item{strings}{
@@ -33,6 +34,12 @@ read.orthography.profile(file,
   }
   \item{info}{
   logical: should extra Unicode-info (codepoints and Unicode names) be added in the generation of an orthography profile? Defaults to \code{FALSE}.
+  }
+  \item{left.context}{
+  name of column in orthography profile with specification of the left context of a transliteration.
+  }
+  \item{right.context}{
+  name of column in orthography profile with specification of the right context of a transliteration.
   }
 } 
 \details{

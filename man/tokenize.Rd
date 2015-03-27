@@ -13,8 +13,8 @@ This function is the main function to produce, test and apply orthography profil
 \usage{
 tokenize(strings, orthography.profile = NULL, transliterate = FALSE,
   graphemes = "graphemes", replacements = "replacements",
-  sep = " ", sep.replacement = "#",
-  normalize = "NFC", use.size.order = TRUE,
+  sep = " ", sep.replacement = "#", missing = "\u2047",
+  normalize = "NFC", size.order = TRUE, context = FALSE,
   global.match = TRUE, file = NULL)  
 }
 \arguments{
@@ -39,11 +39,17 @@ tokenize(strings, orthography.profile = NULL, transliterate = FALSE,
   \item{sep.replacement}{
   if the specified separator (by default: space) already occurs in the data, what should it be replaced with (by default: hash) ?
   }
+  \item{missing}{
+  character to be inserted at transliteration when no transliteration is specified. Defaults to DOUBLE QUESTION MARK at U+2047.
+  }
   \item{normalize}{
   which normalization to use, defaults to "NFC". Other option is "NFD". Any other input will result in no normalisation being performed.
   }
-  \item{use.size.order}{
+  \item{size.order}{
   by default graphemes will be identified largest first. If FALSE then the order as specified in the orthography profile will be used.
+  }
+  \item{context}{
+  when context = TRUE then the profile is assumed to have columns named "left" and "right" specifying the context for transliteration.
   }
   \item{global.match}{
   how should the tokenization be performed. By default, use global match, i.e. each grapheme will be replaced throughout the whole string before the next grapheme is taken up. If FALSE, then the replacements will be performed along each string, similar in result to a finite state transducer, i.e. which grapheme matches the start, then proceed along the string.

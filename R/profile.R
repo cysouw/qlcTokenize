@@ -73,7 +73,8 @@ write.orthography.profile <- function(strings,
 # ========================
 
 read.orthography.profile <- function(file, 
-      graphemes = "graphemes", replacements = "replacements") {
+      graphemes = "graphemes", replacements = "replacements",
+      left.context = NULL, right.context = NULL) {
 
   # when "file" is an R object
   if (!is.character(file)) {
@@ -108,7 +109,7 @@ read.orthography.profile <- function(file,
       graphs <- read.table(graphemesFile, sep = "\t", header = TRUE, 
                        colClasses = "character", quote = "", fill = TRUE)
       if (ncol(graphs) > 1) {
-        graphs <- graphs[, c(graphemes, replacements), drop = FALSE]
+        graphs <- graphs[, c(graphemes, replacements, left.context, right.context), drop = FALSE]
       }
     } else {
       graphs = NULL
