@@ -11,7 +11,8 @@ To process strings it is often very useful to tokenise them into graphemes (i.e.
 This function is the main function to produce, test and apply orthography profiles.
 }
 \usage{
-tokenize(strings, orthography.profile = NULL, transliterate = FALSE,
+tokenize(strings, 
+  orthography.profile = NULL, transliterate = FALSE,
   graphemes = "graphemes", replacements = "replacements",
   sep = " ", sep.replacement = "#", missing = "\u2047",
   normalize = "NFC", size.order = TRUE, context = FALSE,
@@ -22,7 +23,9 @@ tokenize(strings, orthography.profile = NULL, transliterate = FALSE,
   vector of strings to the tokenized.
   }
   \item{orthography.profile}{
-  orthography profile specifying the graphemes for the tokenization, and possibly any replacements of the available graphemes. Can be a filename or an object as returned by \code{read.orthography.profile}. If NULL then the orthography profile will be created on the fly using the defaults of \code{write.orthography.profile}.
+  orthography profile specifying the graphemes for the tokenization, and possibly any replacements of the available graphemes. Can be a filename or an object as returned by \code{read.orthography.profile}. 
+  
+  If NULL then the orthography profile will be created on the fly using the defaults of \code{write.orthography.profile}.
   }
   \item{transliterate}{
   logical: should orthographic transliteration be performed after tokenization. Defaults to FALSE.
@@ -59,7 +62,7 @@ tokenize(strings, orthography.profile = NULL, transliterate = FALSE,
   }
 } 
 \details{
-The \code{tokenize} function will tokenize (and possibly replace, i.e. transliterate) strings into graphemes. First, the graphemes from the \code{.prf} table will used for the tokenization , starting from the largest graphemes (in unicode-code-point count using NFC normalisation by default). Any unmatched sequences in the data will be reported with a warning. Any rules specified in the \code{.rules} file will be applied at the end.
+The \code{tokenize} function will tokenize (and replace, i.e. transliterate) strings into graphemes. First, the graphemes from the \code{.prf} table will used for the tokenization , starting from the largest graphemes (in unicode-code-point count using NFC normalisation by default). Any unmatched sequences in the data will be reported with a warning. Any rules specified in the \code{.rules} file will be applied at the end.
 }
 \value{
 Without specificatino of \code{file}, the function \code{tokenize} will return a list of three:
