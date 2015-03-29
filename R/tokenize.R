@@ -197,6 +197,11 @@ tokenize <- function(strings, orthography.profile = NULL
                       )
       }
     
+    # add new graphs that appear in tokenization
+    new_strings <- profile$rules[,2]
+    new_graphs <- unique(unlist(strsplit(new_strings, user.sep)))
+    graphs <- union(graphs, new_graphs)
+    
     # again replace regex special characters in strings and graphs
     strings <- replace.regex(strings)
     graphs <- replace.regex(graphs)
