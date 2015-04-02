@@ -18,7 +18,7 @@ write.orthography.profile <- function(strings,
   # split using unicode definitions
   # except when 'sep' is specified, then split by sep
   if (is.null(sep)) {
-    splitted <- stri_split_boundaries(strings, boundary = "character")
+    splitted <- stri_split_boundaries(strings, type = "character")
   } else {
     splitted <- strsplit(strings, sep)
     # remove empty characters
