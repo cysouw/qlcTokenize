@@ -1,4 +1,4 @@
-context("Tokenization")
+context("Tokenization (old version")
 
 # help functions
 outstrings <- function(output) {
@@ -10,7 +10,7 @@ outgraphemes <- function(output) {
 
 # basic structure of tokenize function
 example <- c("this is", "a test")
-out <- tokenize(example)
+out <- tokenize_old(example)
 
 test_that("output structure", {
   expect_equal(length(out), 3)
@@ -30,7 +30,7 @@ profile <- as.data.frame(rbind(
   as.matrix(out$profile)
   , c("th","","","","")))
 
-out2 <- tokenize(example, orthography.profile = profile)
+out2 <- tokenize_old(example, orthography.profile = profile)
 
 test_that("using profile", {
   expect_equal(outstrings(out2), c("th i s # i s", "a # t e s t"))
@@ -39,7 +39,7 @@ test_that("using profile", {
 })
 
 test_that("getting errors on missing characters", {
-  expect_warning(tokenize("thing", orthography.profile = profile))
+  expect_warning(tokenize_old("thing", orthography.profile = profile))
 })
 
 # check different methods of tokenization
@@ -47,8 +47,8 @@ profile <- as.data.frame(rbind(
   as.matrix(out2$profile)
   , c("his","","","","")))
 
-out_global <- tokenize(example, orthography.profile = profile, global.match = TRUE)
-out_linear <- tokenize(example, orthography.profile = profile, global.match = FALSE)
+out_global <- tokenize_old(example, orthography.profile = profile, global.match = TRUE)
+out_linear <- tokenize_old(example, orthography.profile = profile, global.match = FALSE)
 
 test_that("different methods of tokenization", {
   expect_equal(outstrings(out_global), c("t his # i s", "a # t e s t"))

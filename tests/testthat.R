@@ -1,4 +1,4 @@
 library(testthat)
 library(qlcTokenize)
 
-test_check("qlcTokenize")
+# test_check("qlcTokenize")

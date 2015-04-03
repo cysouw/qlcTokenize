@@ -1,96 +1,114 @@
 \name{tokenize}
 \alias{tokenize}
-\alias{tokenise}
-
 \title{
-Tokenization of character strings based on an orthography profile
+Tokenization and transliteration of character strings based on an orthography profile
 }
 \description{
-To process strings it is often very useful to tokenise them into graphemes (i.e. functional units of the orthography), and possibly replace those graphemes by other symbols to harmonize the orthographic representation of different orthographic representations (`transcription'). As a quick and easy way to specify, save, and document the decisions taken for the tokenization, we propose using an orthography profile.
+To process strings it is often very useful to tokenise them into graphemes (i.e. functional units of the orthography), and possibly replace those graphemes by other symbols to harmonize the orthographic representation of different orthographic representations (`transcription/transliteration'). As a quick and easy way to specify, save, and document the decisions taken for the tokenization, we propose using an orthography profile.
 
 This function is the main function to produce, test and apply orthography profiles.
 }
 \usage{
 tokenize(strings, 
-  orthography.profile = NULL, transliterate = FALSE,
-  graphemes = "graphemes", replacements = "replacements",
-  sep = " ", sep.replacement = "#", missing = "\u2047",
-  normalize = "NFC", size.order = TRUE, context = FALSE,
-  global.match = TRUE, file = NULL)  
+  orthography.profile = NULL, transliterate = NULL,
+  parsing = "global", ordering = c("size", "context"),
+  sep = " ", missing = "⁇", normalize = "NFC",
+  context = FALSE, case.insensitive = FALSE,
+  file.out = NULL)
 }
 \arguments{
   \item{strings}{
-  vector of strings to the tokenized.
-  }
+  Vector of strings to the tokenized.
+}
   \item{orthography.profile}{
-  orthography profile specifying the graphemes for the tokenization, and possibly any replacements of the available graphemes. Can be a filename or an object as returned by \code{read.orthography.profile}. 
-  
-  If NULL then the orthography profile will be created on the fly using the defaults of \code{write.orthography.profile}.
-  }
+  Orthography profile specifying the graphemes for the tokenization, and possibly any replacements of the available graphemes. Can be a reference to a file or an R object. If NULL then the orthography profile will be created on the fly using the defaults of \code{write.profile}.
+}
   \item{transliterate}{
-  logical: should orthographic transliteration be performed after tokenization. Defaults to FALSE.
-  }
-  \item{graphemes}{
-  name (or number) of the column in the orthography profile listing the graphemes to be used for the tokenization. Defaults to "graphemes"
-  }
-  \item{replacements}{
-  name (or number) of the column in the orthography profile listing the replacements. Defaults to "replacements"
-  }
+  Default \code{NULL}, meaning no transliteration is to be performed. Alternatively, specify the name of the column in the orthography profile that should be used for replacement.
+}
+  \item{parsing}{
+  Method to be used for parsing the strings into graphemes. Currently two options are implemented: \code{global} and \code{linear}. See Details for further explanation.
+}
+  \item{ordering}{
+  Method for ordering. Currently three different methods are implemented, which can be combined (see Details below): \code{size}, \code{context}, and \code{frequency}. Use \code{NULL} to prevent ordering and use the top to bottom order as specified in the orthography profile.
+}
   \item{sep}{
-  separator to be inserted between graphemes. Defaults to space. 
-  }
-  \item{sep.replacement}{
-  if the specified separator (by default: space) already occurs in the data, what should it be replaced with (by default: hash) ?
-  }
+  Separator to be inserted between graphemes. Defaults to space. This function assumes that the separator specified here does not occur in the data. If it does, unexpected things might happen. Consider removing the chosen seperator from your strings first, e.g. by using \code{\link{gsub}}.
+}
   \item{missing}{
-  character to be inserted at transliteration when no transliteration is specified. Defaults to DOUBLE QUESTION MARK at U+2047.
-  }
+  Character to be inserted at transliteration when no transliteration is specified. Defaults to DOUBLE QUESTION MARK at U+2047.
+}
   \item{normalize}{
-  which normalization to use, defaults to "NFC". Other option is "NFD". Any other input will result in no normalisation being performed.
-  }
-  \item{size.order}{
-  by default graphemes will be identified largest first. If FALSE then the order as specified in the orthography profile will be used.
-  }
+  Which normalization to use, defaults to "NFC". Other option is "NFD". Any other input will result in no normalisation being performed.
+}
   \item{context}{
-  when context = TRUE then the profile is assumed to have columns named "left" and "right" specifying the context for transliteration.
-  }
-  \item{global.match}{
-  how should the tokenization be performed. By default, use global match, i.e. each grapheme will be replaced throughout the whole string before the next grapheme is taken up. If FALSE, then the replacements will be performed along each string, similar in result to a finite state transducer, i.e. which grapheme matches the start, then proceed along the string.
-  }
-  \item{file}{
-  filename for results to be written. No suffix should be specified, as various different files with different suffixes are produced.
-  }
-} 
+  Logical: should contexts be considered in the tokenization? By default, this function does not assume any contexts to be specified. If \code{context = TRUE} then the function assumes that there are columns called \code{left} (for the left context) and \code{right} (for the right context), and optionally a column called \code{class} (for the specification of grapheme-classes) in the orthography profile. These are hard-coded names, so please adapt your orthography profile accordingly. The columns \code{left} and \code{right} allow for regular expression to specify context.
+
+When \code{context = FALSE} internally the matching of graphemes is done exact, i.e. without using regular expressions. When \code{context = TRUE} ICU-style regular expression (see \code{strgi:stringi_search_regex}) are used, so any reserved characters have to be escaped in the orthography profile. Specifically, add a slash "\" before any occurrence of the characters \code{".|()[]{}^$*+?"} in your profile (except of course when these characters are used in their regular expression meaning).
+}
+  \item{case.insensitive}{
+  By default, there is no case matching, so "A" and "a" are different graphemes. The option \code{case.incensitive = TRUE} applies a simple ICU "u_toupper" as made available in the \code{stringi} package. This should give the desired results in most cases, though for special orthographies the case mapping might need to be specified explicitly. In that case, consider writing a profile specifying the case mapping.
+}
+  \item{file.out}{
+  Filename for results to be written. No suffix should be specified, as various different files with different suffixes are produced (see Details below).
+}
+}
 \details{
-The \code{tokenize} function will tokenize (and replace, i.e. transliterate) strings into graphemes. First, the graphemes from the \code{.prf} table will used for the tokenization , starting from the largest graphemes (in unicode-code-point count using NFC normalisation by default). Any unmatched sequences in the data will be reported with a warning. Any rules specified in the \code{.rules} file will be applied at the end.
+Given a set of graphemes, there are at least two different methods to tokenize strings. The first is called \code{global} here: this approach takes the first grapheme, matches this grapheme globally at all places in the string, and then turns to the next string. The other approach is called \code{linear} here: this approach walks through the string from left to right. At the first character it looks through all graphemes whether there is any match, and then walks further to the end of the match and starts again. In some special cases these two methods can lead to different results (see Examples for an example).
+
+The ordering or the lines in the ortography profile is of crucial importance, and different orderings will lead to radically different results. To simply use the top to bottom ordering as specified in the profile, use \code{order = NULL}. Currently, there are three different ordering strategies implemented: \code{size}, \code{context}, and \code{frequency}. By specifying more than one in a vector, these orderings are used to break ties, e.g. \code{c("size, frequency")} will first order by size, and for those with the same size, it will order by frequency. For lines that are still tied (i.e. the have the same size and frequency) the order will fall back to the order as attested in the profile.
+
+\itemize{
+\item \code{size}: order the lines in the profile by the size of the grapheme, largest first. Size is measured by number of Unicode characters after normalization as specified in the option \code{normalize}. For example, \code{é} has a size of 1 with \code{normalize = "NFC"}, but a size of 2 with \code{normalize = "NFD"}.
+
+\item \code{context:} order the lines by whether they have any context specified, lines with context coming first. Note that this only works when the option \code{context = TRUE} is also chosen.
+
+\item \code{frequency}: order the lines by the frequency with which they match in the specified strings before tokenization, least frequent coming first. This frequency of course depends crucially on the available strings, so it will lead to different orderings when applied to different data. Also note that this frequency is (necessarily) measured before graphemes are identified, so these ordering frequencies are not the same as the final frequencies shown in the outpur. Frequency of course also strongly differs on whether context is used for the matching through \code{context = TRUE}.
+}
 }
 \value{
-Without specificatino of \code{file}, the function \code{tokenize} will return a list of three:
-\item{strings}{the vector with the parsed strings}
-\item{profile}{a dataframe with the graphemes and some more information}
-\item{warnings}{a table with all original strings and the unmatched parts}
+Without specificatino of \code{file.out}, the function \code{tokenize} will return a list of three:
+\item{strings}{a dataframe with the original and the tokenized/transliterated strings}
+\item{profile}{a dataframe with the graphemes with added frequencies. The dataframe is ordered according to the order that resulted from the specifications in \code{ordering}.}
+\item{missing}{a dataframe with all original strings that contain unmatched parts.}
 
-When \code{file} is specified, these three tables will be written to three different files, \code{file.txt} for the strings, \code{file.prf} for the orthrography profile, and \code{file_warnings.txt} for the warnings. Note that when replacements are made (i.e. when \code{replace = TRUE}), then no orthography profile is produced. Likewise, when there are not warnings, then no file with warning is produced.
+When \code{file} is specified, these three tables will be written to three different files, \code{file.txt} for the strings, \code{file.prf} for the orthrography profile, and \code{file_missing.txt} for the strings with missing parts. When there is nothing missing, then no file for the missing strings is produced.
+}
+\references{
+Moran & Cysouw (forthcoming)
+}
+\note{
+Note that overlapping matching does not (yet) work with regex matching when \code{context = TRUE}. That means that for example "aa" is only found once in "aaa". In some special cases this might lead to problems that might have to be explicitly specified in the profile, e.g. a grapheme "aa" with a left context "a". See examples below.
 }
 \author{
-Michael Cysouw
+Michael Cysouw <cysouw@mac.com>
+}
+\seealso{
+See Also \code{\link{write.profile}} for preparing a skeleton orthography profile.
 }
 \examples{
 # make an ad-hoc orthography profile
-gr <- cbind(c("a","ä","n","ng","ch","sch"),c("a","e","n","N","x","sh"))
-colnames(gr) <- c("graphemes","replacements")
-( op <- list(graphs = gr, rules = NULL) )
-
+profile <- cbind(
+    graphemes = c("a","ä","n","ng","ch","sch"), 
+    trans = c("a","e","n","N","x","sh"))
 # tokenization
-tokenize(
-    c("nana", "änngschä", "ach")
-    , op
-    , graphemes = "graphemes")
-    
+tokenize(c("nana", "änngschä", "ach"), profile)
 # with replacements and an error message
-tokenize(
-    c("Naná", "änngschä", "ach")
-    , op
-    , graphemes = "graphemes"
-    , replacements = "replacements")
+tokenize(c("Naná", "änngschä", "ach"), profile, transliterate = "trans")
+
+# different results of ordering
+tokenize("aaa", c("a","aa"), order = NULL)
+tokenize("aaa", c("a","aa"), order = "size")
+
+\dontrun{
+# regexmatching does not catch overlap in some special cases
+# this results in a warning instead of just parsing "ab bb" in the following example
+profile <- write.profile("ab bb", info = FALSE, editing = TRUE, sep = " ")
+tokenize("abbb", profile , context = TRUE, order = NULL)
 }
+
+# different parsing methods can lead to different results
+tokenize("abc", c("bc","ab","a","c"), order = NULL, parsing = "global")$strings
+tokenize("abc", c("bc","ab","a","c"), order = NULL, parsing = "linear")$strings
+}
+

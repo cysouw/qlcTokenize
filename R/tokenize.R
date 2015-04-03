@@ -2,66 +2,43 @@
 # tokenize strings
 # ================
 
-tokenize <- function(strings, orthography.profile = NULL
-                     , transliterate = FALSE
-                     , graphemes = "graphemes", replacements = "replacements"
-                     , sep = " ", sep.replacement = "#", missing = "\u2047"
-                     , normalize = "NFC"
-                     , size.order = TRUE, context = FALSE, global.match = TRUE
-                     , file = NULL) {
-
-  # --------------------------------------------
-  # help functions to deal with regex characters
-  # --------------------------------------------
-  
-  regexchars <- c(".","|","(",")","[","]","{","}","^","$","*","+","?")
-  
-  replace.regex <- function(x) {  
-    for (i in 1:length(regexchars)) {
-      x <- gsub(regexchars[i]
-                , intToUtf8(1110000 + i)
-                , x
-                , fixed = TRUE
-                )
-    }
-    return(x)
-  }
-  
-  restore.regex <- function(x) {
-    for (i in 1:length(regexchars)) {
-      x <- gsub(pattern = intToUtf8(1110000 + i)
-                , replacement = regexchars[i]
-                , x
-                , fixed = TRUE
-                )
-    }
-    return(x)
-  }
-   
+tokenize <- function(strings
+                      , orthography.profile = NULL
+                      , transliterate = NULL
+                      , parsing = "global"
+                      , ordering = c("size","context")
+                      , sep = " "
+                      , missing = "\u2047"
+                      , normalize = "NFC"
+                      , context = FALSE
+                      , case.insensitive = FALSE
+                      , file.out = NULL) {
+ 
   # ---------------
   # preprocess data
   # ---------------
   
-  # use abstract separator internally
-  user.sep <- sep
-  sep <- intToUtf8(1110000)
-  
-  # normalization
-  if (normalize == "NFC" | normalize == "nfc") {
-    transcode <- stri_trans_nfc
-  } else if (normalize == "NFD" | normalize == "nfd") {
-    transcode <- stri_trans_nfd
-  } else {
-    transcode <- identity
-  }
-  
-  # keep original strings, and normalize NFC everything by default
-  originals <- as.vector(strings)
-  strings <- transcode(originals)
+	# separators
+	internal_sep <- intToUtf8(1110000)
+	user_sep <- sep
 
-  # replace regex special characters in strings
-  strings <- replace.regex(strings)
- 
+	# normalization
+	if (normalize == "NFC") {
+	  transcode <- stri_trans_nfc
+	} else if (normalize == "NFD") {
+	  transcode <- stri_trans_nfd
+	} else {
+	  transcode <- identity
+	}
+	
+	# keep original strings, and normalize NFC everything by default
+	originals <- as.vector(strings)
+	strings <- transcode(originals)
+
+  # collapse strings for easier coding
+  all <- paste(strings, collapse = internal_sep)
+  all <- paste(internal_sep, all, internal_sep, sep = "")
+  
   # --------------------
   # read or make profile
   # --------------------
@@ -69,308 +46,307 @@ tokenize <- function(strings, orthography.profile = NULL
   # read orthography profile (or make new one)
   if (is.null(orthography.profile)) {
     # make new orthography profile   
-    graphs  <- write.orthography.profile(strings, info = FALSE)
-    profile <- list(graphs = graphs, rules = NULL)    
-  } else {
-    # read profile from file
-    if (context) {
-      profile <- read.orthography.profile(orthography.profile
-                                          , graphemes
-                                          , replacements
-                                          , left.context = "left"
-                                          , right.context = "right")  
+    profile  <- write.profile(strings, info = FALSE)  
+  } else if (is.null(dim(orthography.profile))) {
+    if (length(orthography.profile) > 1) {
+      # assume that the strings are graphemes
+      profile <- data.frame(graphemes = orthography.profile, stringsAsFactors = FALSE)
     } else {
-      profile <- read.orthography.profile(orthography.profile
-                                        , graphemes
-                                        , replacements)  
+    # read profile from file
+    profile <- read.table(orthography.profile
+                          , sep = "\t"
+                          , quote = ""
+                          , header = T
+                          , fill = T
+                          , colClasses = "character")
     }
-    # when there is no prf-file (i.e. there is only a rules file), 
-    # then make a default profile
-    if(is.null(profile$graphs)) {
-      profile$graphs <- write.orthography.profile(strings, info = FALSE)
-    }
-  } 
-    
+  } else {
+    # assume the profile is a suitable R object
+    profile <- orthography.profile
+  }
+
   # normalise characters in profile, just to be sure
-  graphs <- transcode(profile$graphs[,graphemes])
+  graphs <- transcode(profile[,"graphemes"])
+  if (!is.null(transliterate)) {
+    trans <- transcode(profile[,transliterate])
+  }
   
-  # order graphs to size
-  if (size.order) {
-    graphs_parts <- strsplit(graphs, split = "")
-    graphs_length <- sapply(graphs_parts, length)
-    graph_order <- order(graphs_length, decreasing = TRUE)
+  # -----------------------------------------
+  # prepare regexes with context from profile
+  # -----------------------------------------
+ 
+  if (context) {
+    
+    # normalise them too
+    left <- transcode(profile[,"left"])
+    right <- transcode(profile[,"right"])
+
+    # replace regex boundaries with internal separator
+    right <- gsub("\\$", internal_sep, right)
+    left <- gsub("^\\^", internal_sep, left)
+    
+    # make classes if there is anything there
+    if (sum(profile[,"class"] != "") > 0) {
+      
+      classes <- unique(profile[,"class"])
+      classes <- classes[classes != ""]
+      groups <- sapply(classes,function(x){
+        graphs[profile[,"class"] == x]
+        })
+      classes.regex <- sapply(groups,function(x){
+        paste( "((", paste( x, collapse = ")|(" ), "))", sep = "")
+        })
+      
+      for (i in classes) {
+        left <- gsub(i, classes.regex[i], left, fixed = TRUE)
+        right <- gsub(i, classes.regex[i], right, fixed = TRUE)
+      }
+    }
+    
+    # add lookahead/lookbehind syntax and combine everything together
+    left[left != ""] <- paste("(?<=", left[left != ""], ")", sep = "")
+    right[right != ""] <- paste("(?=", right[right != ""], ")", sep = "")
+    contexts <- paste(left, graphs, right, sep = "")
+        
+  } else {
+    contexts <- graphs
+  }
+
+  # -----------------
+  # reorder graphemes
+  # -----------------
+  
+  if (!is.null(ordering)) {
+    
+    size <- nchar(graphs)
+    
+    if (context) {
+      context_availability <- (left != "" | right != "")
+      if (!is.na(ordering["frequency"])) {
+        frequency <- - sapply(contexts, function(x) {
+                        stri_count_regex(all
+                             , pattern = x
+                             , case_insensitive = case.insensitive)})
+      } else {
+        frequency <- rep(T, times = length(graphs)) 
+      }
+    } else {
+      context_availability <- rep(T, times = length(graphs))   
+      if (!is.na(ordering["frequency"])) {
+        frequency <- - sapply(contexts, function(x) {
+                       stri_count_fixed(all
+                             , pattern = x
+                             , case_insensitive = case.insensitive
+                             , overlap =  TRUE)})
+      } else {
+        frequency <- rep(T, times = length(graphs)) 
+      }
+    }
+    
+    # order according to dimensions chosen by user in "ordering"    
+    dimensions <- list(size = size
+                       , context = context_availability
+                       , frequency = frequency)
+    graph_order <- rev(do.call(order, dimensions[ordering]))
+
   } else {
     graph_order <- 1:length(graphs)
   }
+  
+  # change order and add internal separator
+  graphs <- graphs[graph_order]
+  graphs <- c(graphs, internal_sep)
 
-  # replace regex special characters in profile
-  # this might be necessary when a external file with a profile is used
-  graphs <- replace.regex(graphs)
+  contexts <- contexts[graph_order]
+  contexts <- c(contexts, internal_sep)
   
-  # --------------------------------------------------
-  # tokenize data, either global when global.match = T
-  # --------------------------------------------------
-  
-  if (global.match) {
-    
-    # replace strings by random unicode range in order of size of grapheme clusters
-    for (i in graph_order) { 
-      strings <- gsub(pattern = graphs[i]
-                      , replacement = intToUtf8(1110020 + i)
-                      , strings
-                      , fixed = TRUE
-                      )    
-    }
-    
-    # parse strings now is easy, because every grapheme is one unicode character
-    strings <- strsplit(strings, split = "") 
-    
-    # and put them back with separator
-    strings <- sapply(strings, function(x){paste(x, collapse = sep)})
-    
-    # put back the multigraphs-substitution characters
-    for (i in graph_order) {
-      strings <- gsub(pattern = intToUtf8(1110020 + i)
-                      , replacement = graphs[i]
-                      , strings
-                      , fixed = TRUE
-                      )
-    }
-    
-  # -------------------------------------------------------
-  # finite-state transducer behaviour when global.match = F
-  # -------------------------------------------------------
-    
-  } else {
-        
-    # order graphs by size and add start-of-string regex
-    gr <- paste("^", graphs[graph_order], sep = "")
-    
-    # the actual attempt to implement a transducer using simple loops
-    # highly inefficient for large datasets
-    make.tokens <- function(string) {
-      result <- ""  
-      while(nchar(string) != 0) {
-        for (i in gr) {
-          if (grepl(i, string)) {
-            result <- paste(result, substr(i, 2, nchar(i)), sep = sep)
-            string <- sub(i, "", string)
-            break
-          } else if (i == tail(gr,1)) {
-            result <- paste(result, substr(string, 1, 1), sep= sep)
-            string <- substr(string, 2, nchar(string))
-          }
-        }
-      }
-      result <- substr(result, 2, nchar(result))
-      return(result)
-    }  
-    
-    strings <- sapply(strings,make.tokens)
-    names(strings) <- NULL
-    
+  if (!is.null(transliterate)) {
+    trans <- trans[graph_order]
+    trans <- c(trans, internal_sep)
   }
   
-  # ------------------
-  # tokenization rules
-  # ------------------
-  
-  # apply rules when specified in the orthography profile
-  if(!is.null(profile$rules)) {
-    
-    # put back regexchars: user will have to take care for them in their regexes
-    strings <- restore.regex(strings)
-    graphs <- restore.regex(graphs)
-    
-    # do the tokenization rules
-    for (i in 1:nrow(profile$rules) ) {
-      regex <- transcode(as.character(profile$rules[i,]))
-      regex <- gsub(pattern = user.sep
-                    , replacement = sep
-                    , regex
-                    , fixed = TRUE
-                    )
-      strings <- gsub(pattern = regex[1]
-                      , replacement = regex[2]
-                      , strings
-                      , perl = TRUE
-                      )
-      }
-    
-    # add new graphs that appear in tokenization
-    new_strings <- profile$rules[,2]
-    new_graphs <- unique(unlist(strsplit(new_strings, user.sep)))
-    graphs <- union(graphs, new_graphs)
-    
-    # again replace regex special characters in strings and graphs
-    strings <- replace.regex(strings)
-    graphs <- replace.regex(graphs)
-    
-  }
-  
-  # -------------------------------------------------    
-  # check for missing graphems in orthography profile
-  # -------------------------------------------------
-  
-  # prepare regexes with context from profile
-  
-  start <- paste("(?<=^|", sep, ")", sep = "")
-  end <- paste("(?=", sep, "|$)", sep = "")
+  # --------------
+  # regex matching
+  # --------------
   
   if (context) {
-  
-    left <- transcode(profile$graphs[,"left"])
-    right <- transcode(profile$graphs[,"right"])
-    left[left != ""] <- paste("(?<=", left[left != ""], sep, ")", sep = "")
-    right[right != ""] <- paste("(?=",  sep, right[right != ""], ")", sep = "")
-    contexts <- paste(start, left, graphs, right, end, sep = "")
-    
+  	matches <- sapply(contexts, function(x) {
+      stri_locate_all_regex(all
+                            , pattern = x
+                            , case_insensitive = case.insensitive
+                            )[[1]]
+      })
   } else {
-    contexts <- paste (start, graphs, end, sep = "")
+    matches <- sapply(contexts, function(x) {
+      stri_locate_all_fixed(all
+                            , pattern = x
+                            , case_insensitive = case.insensitive
+                            , overlap = TRUE
+                            )[[1]]
+    })
   }
+  
+  # --------------------------------------
+  # tokenize data, either global or linear
+  # --------------------------------------
+
+	if (!is.na(pmatch(parsing,"global"))) {
+
+    # preparation
+		taken <- c(NA)
+    breaks <- c(NA)
+    breakcounter <- 1
+    frequency <- rep.int(x = 0, times = length(contexts))
+
+		# just loop through all regex matches 
+    # first in order of graphs, then in order of matches
+		for ( i in 1:length(matches) ) {
+			for ( j in 1:nrow(matches[[i]]) ) {
+        r <- matches[[i]][j,]
+				# if there is a match, and there is nothing yet, then take the grapheme
+        if (is.na(r[1])) {
+          break
+        } else {
+  				if ( prod(is.na(taken[r[1]:r[2]])) == 1 ) {
+  					taken[r[1]:r[2]] <- i
+            breaks[r[1]:r[2]] <- breakcounter
+            breakcounter <- breakcounter + 1
+            frequency[i] <- frequency[i] + 1
+  				}
+				}
+			}
+		}
+		
+		# some post-processing
+		# identify NA: those are missing graphemes
+		taken[is.na(taken)] <-  i+1
+		breaks[is.na(breaks)] <- (breakcounter):(breakcounter + sum(is.na(breaks)) - 1)
     
-  # order contexts to size to get complex regexes firts
-  context_parts <- strsplit(contexts, split = "")
-  context_length <- sapply(context_parts, length)
-  context_order <- order(context_length, decreasing = TRUE)
+		# identify where the next grapheme starts
+		taken <- taken[c(diff(breaks) != 0, TRUE)]
+	
+		# remove internal separator at start and end
+		# they were added to identify NAs at start or finish
+		taken <- tail(head(taken,-1),-1)
+		
+		# replace count-numbers with the corresponding graphs
+		if (!is.null(transliterate)) {
+		  taken <- paste( c(trans, missing)[taken], collapse = user_sep )
+		} else {
+			taken <- paste( c(graphs, missing)[taken], collapse = user_sep )
+		}
+
+  # --------------------------------------------------------
+  # finite-state transducer behaviour when parsing = "linear
+  # --------------------------------------------------------	
+	
+	} else if (!is.na(pmatch(parsing,"linear"))) {
+		
+    # preparations
+		all.matches <- do.call(rbind,matches)[,1]
+		position <- 1
+		taken <- c()
+    frequency <- rep.int(x = 0, times = length(contexts))
+		
+		graphs_match_list <- rep(graphs, times = sapply(matches, dim)[1,])
+    contexts_match_list <- rep(1:length(contexts), times = sapply(matches, dim)[1,])
+    
+		if (!is.null(transliterate)) {
+			trans_match_list <- rep(trans, times = sapply(matches, dim)[1,])
+		} else {
+      trans_match_list <- graphs_match_list
+		}
+		
+		# loop through all positions and take first match
+		while(position <= nchar(all)) {
+			
+			hit <- which(all.matches == position)[1]
+			if (is.na(hit)) {
+				taken <- c(taken, missing)
+				position <- position + 1
+			} else {
+				taken <- c(taken, trans_match_list[hit])
+				position <- position + nchar(graphs_match_list[hit])
+        rule <- contexts_match_list[hit]
+        frequency[rule] <- frequency[rule] + 1
+			}
+		}
+		
+		taken <- tail(head(taken,-1),-1)
+		taken <- paste(taken, collapse =  user_sep)
+		
+	} else {
+    stop(paste0("The parsing strategy \"",parsing,"\" is not defined"))
+	}
+	
+  # ----------------------
+  # preparation of results
+  # ----------------------
   
-  # implementation: just again take some high unicode range 
-  # and replace all graphemes with individual characters
-  # while checking for remainders
-  check <- strings
-  for (i in context_order) { 
-    check <- gsub(pattern = contexts[i]
-                  , replacement = ""
-                  , check
-                  , perl = T
-                  )
-    strings <- gsub(pattern = contexts[i]
-                    , replacement = intToUtf8(1110020 + i)
-                    , strings
-                    , perl = T
-                    )    
-  }
-  
-  # check for missing graphems in orthography profile and produce warning
-  # first remove separators
-  check <- gsub(paste(sep, "+", sep = ""), "", check)
-  
-  # remember unique problem characters
-  problem.characters <- unique(unlist(strsplit(check, "")))
-  
-  # add spaces to show lone diacritics
-  check <- stri_replace_all_regex(check, "(\\p{DIACRITIC})", " $1")
-  
-  # where are leftover characters?
-  leftover <- check != ""
-  
-  # prepare error message
-  if (sum(leftover) > 0) {
-    warning(paste("\nThe following character(s):\n"
-                  , paste(problem.characters, collapse = " ")
-                  , "\nare found in the input data, but are not in the orthography profile.\nCheck output$missing for a table with all problematic strings."
-                  ))
-    problems <- cbind(originals[leftover],check[leftover])
-    colnames(problems) <- c("originals","unmatched")
-    rownames(problems) <- which(leftover)
+	# Split string by internal separator
+  result <- strsplit(taken, split =  paste(sep, sep, sep = internal_sep))[[1]]
+  if (is.null(transliterate)) {
+    strings.out <- data.frame(
+      cbind(originals = originals, tokenized = result)
+      , stringsAsFactors = FALSE)
   } else {
-    problems  <- NULL
+    strings.out <- data.frame(
+      cbind(originals = originals, transliterated = result)
+      , stringsAsFactors = FALSE)
   }
-  
-  # --------------------------------
-  # replace orthography if specified
-  # --------------------------------
-  
-  if (transliterate) {
     
-    # replace problem characters with questionmark in tokenization
-    for (i in problem.characters) {
-      strings <- gsub(i, missing, strings)
-    }
-    
-    # use replacement graphs to put back
-    graphs <- profile$graphs[,replacements]
-    graphs <- transcode(graphs)
-    graphs[graphs == "NULL"] <- ""
-  }
-
-  # ------------------------------------
-  # put back the substitution characters
-  # ------------------------------------
-
-  for (i in context_order) {
-    strings <- gsub(pattern = intToUtf8(1110020 + i)
-                    , replacement = graphs[i]
-                    , strings
-               #    , perl = TRUE
-                    , fixed = TRUE
-                    )
-  }
-  
-  # put back regexchars
-  strings <- restore.regex(strings)
-  graphs <- restore.regex(graphs)
-  
-  # ---------------
-  # prepare results
-  # ---------------
-
-  # make new profile of actual tokenization
-  if (transliterate) {
-    profile <- write.orthography.profile(strings, replacements = FALSE
-                                         , sep = sep, info = TRUE)
+  # Make a list of missing and throw warning
+  problems <- strings.out[grepl(pattern = missing, x = result),] 
+  if ( nrow(problems) > 0 ) {
+    warning("\nThere were unknown characters found in the input data.\nCheck output$missing for a table with all problematic strings.")
   } else {
-    profile <- write.orthography.profile(strings, replacements = TRUE
-                                         , sep = sep, info = TRUE)
+    problems <- NULL
   }
-  # remove missing character from profile in case of unmatched transliterations
-  profile <- profile[profile$graphemes != missing,]
   
-  # insert user specified separator
-  strings <- gsub(user.sep, sep.replacement, strings)
-  strings <- gsub(sep, user.sep, strings)
-
-  # combine orignal strings and tokenized strings in a dataframe
-  tokenization <- as.data.frame(cbind(originals = originals, tokenized = strings))
-
+  # Remove counter for internal separator
+  # Reorder profile according to order and add frequency of rule-use
+  frequency <- head(frequency, -1)
+  profile <- data.frame(profile[graph_order,], stringsAsFactors = FALSE)
+  if (ncol(profile) == 1) {
+    colnames(profile) <- "graphemes"
+  }
+  profile.out <- cbind(frequency, profile)
+  
   # --------------
   # output as list
   # --------------
   
-  if (is.null(file)) {
-   
-    return(list(  strings = tokenization
-                , profile = profile
-                , missing = problems
-                ))
+  if (is.null(file.out)) {
+    
+    return(list(strings = strings.out
+                , profile = profile.out
+                , missing = problems))
     
   # ---------------
   # output to files
   # ---------------
-
-  } else {
-        
-    # file with tokenization is always returned
-    write.table(  tokenization
-                , file = paste(file, ".tokenized", sep = "")
-                , quote = FALSE, sep = "\t", row.names = FALSE)
     
-    # file with orthography profile: user has to watch out for overwrite!
-    write.table(  profile
-                , file = paste(file, ".prf", sep="")
-                , quote = FALSE, sep = "\t", row.names =  FALSE)
+  } else {
+    
+    # file with tokenization is always returned
+    write.table(  strings.out
+                  , file = paste(file.out, ".txt", sep = "")
+                  , quote = FALSE, sep = "\t", row.names = FALSE)
+    
+    # file with orthography profile
+    write.table(  profile.out
+                  , file = paste(file.out, ".prf", sep="")
+                  , quote = FALSE, sep = "\t", row.names =  FALSE)
     
     # additionally write table with warnings when they exist
-    if (sum(leftover) > 0 ) {      
+    if ( !is.null(problems) ) {      
       write.table(  problems
-                  , file = paste(file, ".missing", sep = "")
-                  , quote = FALSE, sep = "\t", row.names = FALSE)
+                    , file = paste(file.out, "_missing.txt", sep = "")
+                    , quote = FALSE, sep = "\t", row.names = FALSE)
     }
-  }
+  } 
 }
+  
 
-# ----------------------------
-# alternative name of function
-# ----------------------------
 
-tokenise <- tokenize
+

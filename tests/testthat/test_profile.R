@@ -1,4 +1,4 @@
-context("Profiles")
+context("Profiles (old version)")
 
 # help functions
 outstrings <- function(output) {
@@ -6,10 +6,10 @@ outstrings <- function(output) {
 }
 
 # testing writing and reading profile files
-write.orthography.profile("thing", file = "thing.prf")
+write.orthography.profile_old("thing", file = "thing.prf")
 cat("th\nng\n", file = "thing.prf", append = TRUE)
-profile <- read.orthography.profile("thing")
-out <- tokenize("thing",orthography.profile = "thing.prf")
+profile <- read.orthography.profile_old("thing")
+out <- tokenize_old("thing",orthography.profile = "thing.prf")
 
 test_that("structure of reading profile from disk", {
   expect_equal(length(profile), 2)
@@ -25,7 +25,7 @@ file.remove("thing.prf")
 
 test_that("reading profiles", {
   # prf-file with multiple columns
-  expect_named(read.orthography.profile("n-test.prf"))
+  expect_named(read.orthography.profile_old("n-test.prf"))
   # prf-file with only graphemes
-  expect_named(read.orthography.profile("abcd_test.prf"))
+  expect_named(read.orthography.profile_old("abcd_test.prf"))
 })

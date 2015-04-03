@@ -1,12 +1,12 @@
-context("Rules")
+context("Rules (old version")
 
 # help functions
 outstrings <- function(output) {
   as.character(output$strings$tokenized)
 }
 
-out1 <- tokenize(c("ane","ant"), orthography.profile = "n-test")
-out2 <- tokenize("abcd", orthography.profile = "abcd-test")
+out1 <- tokenize_old(c("ane","ant"), orthography.profile = "n-test")
+out2 <- tokenize_old("abcd", orthography.profile = "abcd-test")
 
 # testing rules
 test_that("Application of rules", {

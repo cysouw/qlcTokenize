@@ -1,8 +1,8 @@
 Package: qlcTokenize
 Type: Package
 Title: Processing of orthographies using orthography profiles
-Version: 0.3
-Date: 2015-03-26
+Version: 0.4
+Date: 2015-04-03
 Author: Michael Cyosuw
 Maintainer: Michael Cysouw <cysouw@mac.com>
 Description: An easy-to-use interface for various Unicode functionality for processing and harmonizing orthographic representations

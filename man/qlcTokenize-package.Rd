@@ -12,11 +12,11 @@ This packages uses a general approach to describe orthographic systems through s
 \tabular{ll}{
 Package: \tab qlcTokenize\cr
 Type: \tab Package\cr
-Version: \tab 0.3\cr
-Date: \tab 2015-03-26\cr
+Version: \tab 0.4\cr
+Date: \tab 2015-04-03\cr
 License: \tab GPL-3\cr
 }
-The central function is \code{\link{tokenize}}. See also the vignette \code{tokenize} for a basic introduction of the intended usage.
+The central function is \code{\link{tokenize}}. A basic sceleton for an orthography profile can be produced with \code{\link{write.profile}}
 }
 \author{
 Michael Cysouw <cysouw@mac.com>
