@@ -44,7 +44,8 @@ Michael Cysouw <cysouw@mac.com>
 \code{\link{tokenize}}
 }
 \examples{
-# produce statistics, showing five different kinds of "Ä"s in Unicode.
-example <- "ÄӒÄӒΑ̈"
+# produce statistics, showing two different kinds of "A"s in Unicode.
+# unfortunately, this is not possible in Rd-documents, so I had to remove the interesting bits.
+example <- "AAA"
 write.profile(example)
 }

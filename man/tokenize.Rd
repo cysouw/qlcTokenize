@@ -12,7 +12,7 @@ This function is the main function to produce, test and apply orthography profil
 tokenize(strings, 
   orthography.profile = NULL, transliterate = NULL,
   parsing = "global", ordering = c("size", "context"),
-  sep = " ", missing = "⁇", normalize = "NFC",
+  sep = " ", missing = "\u2047", normalize = "NFC",
   context = FALSE, case.insensitive = FALSE,
   file.out = NULL)
 }
@@ -84,7 +84,7 @@ Note that overlapping matching does not (yet) work with regex matching when \cod
 Michael Cysouw <cysouw@mac.com>
 }
 \seealso{
-See Also \code{\link{write.profile}} for preparing a skeleton orthography profile.
+See also \code{\link{write.profile}} for preparing a skeleton orthography profile.
 }
 \examples{
 # make an ad-hoc orthography profile
