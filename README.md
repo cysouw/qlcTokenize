@@ -17,5 +17,7 @@ There is a vignette trying to explain the intended usage of this package. Unfort
 
 In the meantime, you can read the vignette directly here on github by looking in the folder "vignettes" above, using the files with suffix ".md".
 
+Note that the current vignette relates to the old version of the functions. The new versions do not yet have a vignette.
+
 Michael Cysouw
 cysouw@mac.com
