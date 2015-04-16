@@ -299,8 +299,10 @@ tokenize <- function(strings
   # Make a list of missing and throw warning
   problems <- strings.out[grepl(pattern = missing, x = result),]
   colnames(problems) <- c("originals", "errors")
-  if ( nrow(problems) > 0 & !silent) {
-    warning("\nThere were unknown characters found in the input data.\nCheck output$missing for a table with all problematic strings.")
+  if ( nrow(problems) > 0) {
+    if ( !silent ) {
+      warning("\nThere were unknown characters found in the input data.\nCheck output$missing for a table with all problematic strings.")
+    }
   } else {
     problems <- NULL
   }
