@@ -13,7 +13,7 @@ tokenize(strings,
   orthography.profile = NULL, transliterate = NULL,
   parsing = "global", ordering = c("size", "context"),
   sep = " ", missing = "\u2047", normalize = "NFC",
-  context = FALSE, case.insensitive = FALSE,
+  context = FALSE, case.insensitive = FALSE, silent = FALSE,
   file.out = NULL)
 }
 \arguments{
@@ -49,6 +49,9 @@ When \code{context = FALSE} internally the matching of graphemes is done exact, 
   \item{case.insensitive}{
   By default, there is no case matching, so "A" and "a" are different graphemes. The option \code{case.incensitive = TRUE} applies a simple ICU "u_toupper" as made available in the \code{stringi} package. This should give the desired results in most cases, though for special orthographies the case mapping might need to be specified explicitly. In that case, consider writing a profile specifying the case mapping.
 }
+  \item{silent}{
+  Logical: by default missing characters in the strings are reported with a warning. use \code{silent = TRUE} to supress these warnings.
+  }
   \item{file.out}{
   Filename for results to be written. No suffix should be specified, as various different files with different suffixes are produced (see Details below).
 }
@@ -72,7 +75,7 @@ Without specificatino of \code{file.out}, the function \code{tokenize} will retu
 \item{profile}{a dataframe with the graphemes with added frequencies. The dataframe is ordered according to the order that resulted from the specifications in \code{ordering}.}
 \item{missing}{a dataframe with all original strings that contain unmatched parts.}
 
-When \code{file} is specified, these three tables will be written to three different files, \code{file.txt} for the strings, \code{file.prf} for the orthrography profile, and \code{file_missing.txt} for the strings with missing parts. When there is nothing missing, then no file for the missing strings is produced.
+When \code{file} is specified, these three tables will be written to three different tab-separated files (with header lines): \code{file_strings.tsv} for the strings, \code{file_profile.tsv} for the orthrography profile, and \code{file_missing.tsv} for the strings with missing parts. When there is nothing missing, then no file for the missing strings is produced.
 }
 \references{
 Moran & Cysouw (forthcoming)

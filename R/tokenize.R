@@ -12,6 +12,7 @@ tokenize <- function(strings
                       , normalize = "NFC"
                       , context = FALSE
                       , case.insensitive = FALSE
+                      , silent = FALSE
                       , file.out = NULL) {
  
   # ---------------
@@ -296,8 +297,9 @@ tokenize <- function(strings
   }
     
   # Make a list of missing and throw warning
-  problems <- strings.out[grepl(pattern = missing, x = result),] 
-  if ( nrow(problems) > 0 ) {
+  problems <- strings.out[grepl(pattern = missing, x = result),]
+  colnames(problems) <- c("originals", "errors")
+  if ( nrow(problems) > 0 & !silent) {
     warning("\nThere were unknown characters found in the input data.\nCheck output$missing for a table with all problematic strings.")
   } else {
     problems <- NULL
@@ -330,18 +332,18 @@ tokenize <- function(strings
     
     # file with tokenization is always returned
     write.table(  strings.out
-                  , file = paste(file.out, ".txt", sep = "")
+                  , file = paste(file.out, "_strings.tsv", sep = "")
                   , quote = FALSE, sep = "\t", row.names = FALSE)
     
     # file with orthography profile
     write.table(  profile.out
-                  , file = paste(file.out, ".prf", sep="")
+                  , file = paste(file.out, "_profile.tsv", sep="")
                   , quote = FALSE, sep = "\t", row.names =  FALSE)
     
     # additionally write table with warnings when they exist
     if ( !is.null(problems) ) {      
       write.table(  problems
-                    , file = paste(file.out, "_missing.txt", sep = "")
+                    , file = paste(file.out, "_missing.tsv", sep = "")
                     , quote = FALSE, sep = "\t", row.names = FALSE)
     }
   } 
