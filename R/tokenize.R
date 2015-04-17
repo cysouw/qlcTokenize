@@ -304,7 +304,12 @@ tokenize <- function(strings
   if ( nrow(problems) > 0) {
     
     # make a profile for missing characters
-    o <- write.profile(problems$originals, info = FALSE)$graphemes
+    if (case.insensitive) {
+      o <- write.profile(stri_trans_tolower(problems$originals), info = FALSE)$graphemes
+    } else {
+      o <- write.profile(problems$originals, info = FALSE)$graphemes
+    }
+    
     e <- write.profile(problems$errors, info = FALSE)$graphemes
     missing <- setdiff(o,e)
     problemChars <- write.profile(missing)
