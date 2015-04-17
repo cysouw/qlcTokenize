@@ -277,7 +277,7 @@ tokenize <- function(strings
 		taken <- paste(taken, collapse =  user_sep)
 		
 	} else {
-    stop(paste0("The parsing strategy \"",parsing,"\" is not defined"))
+    stop(paste0("The tokenization method \"",parsing,"\" is not defined"))
 	}
 	
   # ----------------------
@@ -286,6 +286,7 @@ tokenize <- function(strings
   
 	# Split string by internal separator
   result <- strsplit(taken, split =  paste(sep, sep, sep = internal_sep))[[1]]
+
   if (is.null(transliterate)) {
     strings.out <- data.frame(
       cbind(originals = originals, tokenized = result)
@@ -299,12 +300,22 @@ tokenize <- function(strings
   # Make a list of missing and throw warning
   problems <- strings.out[grepl(pattern = missing, x = result),]
   colnames(problems) <- c("originals", "errors")
+
   if ( nrow(problems) > 0) {
+    
+    # make a profile for missing characters
+    o <- write.profile(problems$originals, info = FALSE)$graphemes
+    e <- write.profile(problems$errors, info = FALSE)$graphemes
+    missing <- setdiff(o,e)
+    problemChars <- write.profile(missing)
+    
     if ( !silent ) {
       warning("\nThere were unknown characters found in the input data.\nCheck output$missing for a table with all problematic strings.")
+      
     }
   } else {
     problems <- NULL
+    problemChars <- NULL
   }
   
   # Remove counter for internal separator
@@ -324,13 +335,15 @@ tokenize <- function(strings
     
     return(list(strings = strings.out
                 , profile = profile.out
-                , missing = problems))
+                , errors = problems
+                , missing = problemChars
+                ))
+    
+  } else {   
     
   # ---------------
   # output to files
   # ---------------
-    
-  } else {
     
     # file with tokenization is always returned
     write.table(  strings.out
@@ -342,9 +355,12 @@ tokenize <- function(strings
                   , file = paste(file.out, "_profile.tsv", sep="")
                   , quote = FALSE, sep = "\t", row.names =  FALSE)
     
-    # additionally write table with warnings when they exist
+    # additionally write tables with errors when they exist
     if ( !is.null(problems) ) {      
       write.table(  problems
+                    , file = paste(file.out, "_errors.tsv", sep = "")
+                    , quote = FALSE, sep = "\t", row.names = FALSE)   
+      write.table(  problemChars
                     , file = paste(file.out, "_missing.tsv", sep = "")
                     , quote = FALSE, sep = "\t", row.names = FALSE)
     }

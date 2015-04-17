@@ -73,9 +73,10 @@ The ordering or the lines in the ortography profile is of crucial importance, an
 Without specificatino of \code{file.out}, the function \code{tokenize} will return a list of three:
 \item{strings}{a dataframe with the original and the tokenized/transliterated strings}
 \item{profile}{a dataframe with the graphemes with added frequencies. The dataframe is ordered according to the order that resulted from the specifications in \code{ordering}.}
-\item{missing}{a dataframe with all original strings that contain unmatched parts.}
+\item{errors}{a dataframe with all original strings that contain unmatched parts.}
+\item{missing}{a dataframe with the graphemes that are missing from the original orthography profilr, as indicated in the errors}
 
-When \code{file} is specified, these three tables will be written to three different tab-separated files (with header lines): \code{file_strings.tsv} for the strings, \code{file_profile.tsv} for the orthrography profile, and \code{file_missing.tsv} for the strings with missing parts. When there is nothing missing, then no file for the missing strings is produced.
+When \code{file} is specified, these three tables will be written to three different tab-separated files (with header lines): \code{file_strings.tsv} for the strings, \code{file_profile.tsv} for the orthrography profile, \code{file_errors.tsv} for the strings that have unidentifyable parts, and \code{file_missing.tsv} for the graphemes that seem to be missing. When there is nothing missing, then no file for the missing strings is produced.
 }
 \references{
 Moran & Cysouw (forthcoming)
