@@ -119,12 +119,12 @@ tokenize <- function(strings
   
   if (!is.null(ordering)) {
     
-    size <- - nchar(graphs)
+    size <- nchar(graphs)
     
     if (context) {
-      context_availability <- !(left != "" | right != "")
+      context_availability <- (left != "" | right != "")
       if (!is.na(ordering["frequency"])) {
-        frequency <- sapply(contexts, function(x) {
+        frequency <- - sapply(contexts, function(x) {
                         stri_count_regex(all
                              , pattern = x
                              , case_insensitive = case.insensitive)})
@@ -134,7 +134,7 @@ tokenize <- function(strings
     } else {
       context_availability <- rep(T, times = length(graphs))   
       if (!is.na(ordering["frequency"])) {
-        frequency <- sapply(contexts, function(x) {
+        frequency <- - sapply(contexts, function(x) {
                        stri_count_fixed(all
                              , pattern = x
                              , case_insensitive = case.insensitive
@@ -148,7 +148,7 @@ tokenize <- function(strings
     dimensions <- list(size = size
                        , context = context_availability
                        , frequency = frequency)
-    graph_order <- do.call(order, dimensions[ordering])
+    graph_order <- rev(do.call(order, dimensions[ordering]))
 
   } else {
     graph_order <- 1:length(graphs)
