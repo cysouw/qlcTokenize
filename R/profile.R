@@ -7,7 +7,7 @@ write.profile <- function(strings
                          , info = TRUE
                          , editing = FALSE
                          , sep = NULL
-                         , file = NULL) {
+                         , file.out = NULL) {
     
   # split using unicode definitions
   # except when 'sep' is specified, then split by sep
@@ -50,7 +50,7 @@ write.profile <- function(strings
   }
 
   # return result as data frame, or write to file when "file" is specified
-  if (is.null(file)) {
+  if (is.null(file.out)) {
     result <- as.data.frame(graphemes, stringsAsFactors = FALSE)
     rownames(result) <- NULL
     return(result)

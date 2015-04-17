@@ -9,7 +9,7 @@ To process strings, it is often very useful to tokenise them into graphemes (i.e
 A function to establish a skeleton for an orthography profile is provided here. This function takes some strings and lists detailed information on the Unicode characters in the strings.
 }
 \usage{
-write.profile(strings, info = TRUE, editing = FALSE, sep = NULL, file = NULL)
+write.profile(strings, info = TRUE, editing = FALSE, sep = NULL, file.out = NULL)
 }
 \arguments{
   \item{strings}{
