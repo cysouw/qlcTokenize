@@ -91,6 +91,11 @@ Michael Cysouw <cysouw@mac.com>
 See also \code{\link{write.profile}} for preparing a skeleton orthography profile.
 }
 \examples{
+\dontrun{
+% gives error in R CMD check, because of cyrillic characters 
+% # simple example with interesting warning and error reporting
+% tokenize("AАBВ",c("A","B")
+% }
 # make an ad-hoc orthography profile
 profile <- cbind(
     graphemes = c("a","ä","n","ng","ch","sch"), 

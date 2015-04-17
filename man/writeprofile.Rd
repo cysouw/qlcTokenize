@@ -24,7 +24,7 @@ write.profile(strings, info = TRUE, editing = FALSE, sep = NULL, file.out = NULL
   \item{sep}{
   separator to separate the strings. When NULL (by default), then unicode character definitions are used to split (as provided by UCI, ported to R by \code{stringi::stri_split_boundaries}. When \code{sep} is specified, strings are split by this separator.
 }
-  \item{file}{
+  \item{file.out}{
   Filename for writing the profile to disk. When \code{NULL} the profile is returned as an R dataframe consisting of strings.
 }
 }
