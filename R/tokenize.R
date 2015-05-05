@@ -49,8 +49,10 @@ tokenize <- function(strings
     # make new orthography profile
     if (normalize == "NFC") {
       profile  <- write.profile(strings, info = FALSE)  
+    } else if (normalize == "NFD") {
+      profile  <- write.profile(strings, normalize = "NFD", sep = "", info = FALSE)
     } else {
-      profile  <- write.profile(strings, sep = "", info = FALSE)
+      profile  <- write.profile(strings, sep = "", info = FALSE) 
     }
   } else if (is.null(dim(orthography.profile))) {
     if (length(orthography.profile) > 1) {
@@ -311,13 +313,28 @@ tokenize <- function(strings
   if ( nrow(problems) > 0) {
     
     # make a profile for missing characters
-    if (case.insensitive) {
-      o <- write.profile(stri_trans_tolower(strings[whichProblems]), info = FALSE)$graphemes
+    if (normalize == "NFD") {
+      split <- ""
     } else {
-      o <- write.profile(strings[whichProblems], info = FALSE)$graphemes
+      split <- NULL
     }
     
-    e <- write.profile(result[whichProblems], info = FALSE)$graphemes
+    if (case.insensitive) {
+      o <- write.profile(stri_trans_tolower(strings[whichProblems])
+                         , info = FALSE
+                         , sep = split
+                         )$graphemes
+    } else {
+      o <- write.profile(strings[whichProblems]
+                         , info = FALSE
+                         , sep = split
+                         )$graphemes
+    }
+    
+    e <- write.profile(result[whichProblems]
+                       , info = FALSE
+                       , sep = split
+                       )$graphemes
     missing <- setdiff(o,e)
     problemChars <- write.profile(missing)
     
