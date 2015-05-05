@@ -9,11 +9,16 @@ To process strings, it is often very useful to tokenise them into graphemes (i.e
 A function to establish a skeleton for an orthography profile is provided here. This function takes some strings and lists detailed information on the Unicode characters in the strings.
 }
 \usage{
-write.profile(strings, info = TRUE, editing = FALSE, sep = NULL, file.out = NULL)
+write.profile(strings, 
+    normalize = NULL, info = TRUE, editing = FALSE, sep = NULL, 
+    file.out = NULL)
 }
 \arguments{
   \item{strings}{
   A vector of strings on which to base the orthography profile
+}
+  \item{normalize}{
+  Should any unicode normalization be applied before making a profile? By default, no normalization is applied, giving direct feedback on the actual encoding as observed in the strings. Other options are \code{NFC} and \code{NFD}. In combination with \code{sep} these options can lead to different insights into the structure of your strings (see examples below).
 }
   \item{info}{
   Add columns with Unicode information on the graphemes: Unicode code points, Unicode names, and frequency of occurrence in the input strings.
@@ -45,7 +50,19 @@ Michael Cysouw <cysouw@mac.com>
 }
 \examples{
 # produce statistics, showing two different kinds of "A"s in Unicode.
-# unfortunately, this is not possible in Rd-documents, so I had to remove the interesting bits.
-example <- "AAA"
+# look at the output of "example" in the console to get the point!
+(example <- "\u0041\u0391\u0410")
 write.profile(example)
+
+# note the differences. Again, look at the example in the console!
+(example <- "ÙÚÛ\u0055\u0300\u0055\u0301\u0055\u0302")
+# default settings
+write.profile(example)
+# split according to unicode codepoints
+write.profile(example, sep = "")
+# after NFC normalization unicode codepoints have changed
+write.profile(example, normalize = "NFC", sep = "")
+# NFD normalization gives yet another structure of the codepoints
+write.profile(example, normalize = "NFD", sep = "")
+
 }

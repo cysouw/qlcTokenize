@@ -4,11 +4,22 @@
 # =================================================================
 
 write.profile <- function(strings
+                         , normalize = NULL
                          , info = TRUE
                          , editing = FALSE
                          , sep = NULL
                          , file.out = NULL) {
-    
+  
+  # normalization
+  if (is.null(normalize)) {
+    transcode <- identity
+  } else if (normalize == "NFC") {
+    transcode <- stri_trans_nfc
+  } else if (normalize == "NFD") {
+    transcode <- stri_trans_nfd
+  } 
+  strings <- transcode(strings)
+  
   # split using unicode definitions
   # except when 'sep' is specified, then split by sep
   if (is.null(sep)) {

@@ -46,8 +46,12 @@ tokenize <- function(strings
   
   # read orthography profile (or make new one)
   if (is.null(orthography.profile)) {
-    # make new orthography profile   
-    profile  <- write.profile(strings, info = FALSE)  
+    # make new orthography profile
+    if (normalize == "NFC") {
+      profile  <- write.profile(strings, info = FALSE)  
+    } else {
+      profile  <- write.profile(strings, sep = "", info = FALSE)
+    }
   } else if (is.null(dim(orthography.profile))) {
     if (length(orthography.profile) > 1) {
       # assume that the strings are graphemes
@@ -285,7 +289,9 @@ tokenize <- function(strings
   # ----------------------
   
 	# Split string by internal separator
-  result <- strsplit(taken, split =  paste(sep, sep, sep = internal_sep))[[1]]
+  result <- strsplit(taken, 
+                     split =  paste(sep, sep, sep = internal_sep)
+                     )[[1]]
 
   if (is.null(transliterate)) {
     strings.out <- data.frame(
@@ -298,19 +304,20 @@ tokenize <- function(strings
   }
     
   # Make a list of missing and throw warning
-  problems <- strings.out[grepl(pattern = missing, x = result),]
+  whichProblems <- grepl(pattern = missing, x = result)
+  problems <- strings.out[whichProblems,]
   colnames(problems) <- c("originals", "errors")
 
   if ( nrow(problems) > 0) {
     
     # make a profile for missing characters
     if (case.insensitive) {
-      o <- write.profile(stri_trans_tolower(problems$originals), info = FALSE)$graphemes
+      o <- write.profile(stri_trans_tolower(strings[whichProblems]), info = FALSE)$graphemes
     } else {
-      o <- write.profile(problems$originals, info = FALSE)$graphemes
+      o <- write.profile(strings[whichProblems], info = FALSE)$graphemes
     }
     
-    e <- write.profile(problems$errors, info = FALSE)$graphemes
+    e <- write.profile(result[whichProblems], info = FALSE)$graphemes
     missing <- setdiff(o,e)
     problemChars <- write.profile(missing)
     
