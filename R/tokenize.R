@@ -92,6 +92,11 @@ tokenize <- function(strings
     right <- gsub("\\$", internal_sep, right)
     left <- gsub("^\\^", internal_sep, left)
     
+    # replce dot at start or end with absence of internal separator
+    no_sep <- paste0("[^", internal_sep, "]")
+    rigth <- gsub("\\.$", nosep, right)
+    left <- gsub("^\\.", nosep, left)
+    
     # make classes if there is anything there
     if (sum(profile[,"class"] != "") > 0) {
       
