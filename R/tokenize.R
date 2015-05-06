@@ -342,7 +342,7 @@ tokenize <- function(strings
     problemChars <- write.profile(missing)
     
     if ( !silent ) {
-      warning("\nThere were unknown characters found in the input data.\nCheck output$missing for a table with all problematic strings.")
+      warning("\nThere were unknown characters found in the input data.\nCheck output$errors for a table with all problematic strings.")
       
     }
   } else {
