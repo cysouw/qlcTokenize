@@ -92,11 +92,6 @@ tokenize <- function(strings
     right <- gsub("\\$", internal_sep, right)
     left <- gsub("^\\^", internal_sep, left)
     
-    # replce dot at start or end with absence of internal separator
-    no_sep <- paste0("[^", internal_sep, "]")
-    rigth <- gsub("\\.$", nosep, right)
-    left <- gsub("^\\.", nosep, left)
-    
     # make classes if there is anything there
     if (sum(profile[,"class"] != "") > 0) {
       
@@ -118,6 +113,9 @@ tokenize <- function(strings
     # add lookahead/lookbehind syntax and combine everything together
     left[left != ""] <- paste("(?<=", left[left != ""], ")", sep = "")
     right[right != ""] <- paste("(?=", right[right != ""], ")", sep = "")
+    # replace dot at start with internal separator
+    left <- gsub("(?<=.", paste0("(?<!", internal_sep), left, fixed =  TRUE)
+    
     contexts <- paste(left, graphs, right, sep = "")
         
   } else {
