@@ -6,7 +6,7 @@ Writing of a orthography profile skeleton
 \description{
 To process strings, it is often very useful to tokenise them into graphemes (i.e. functional units of the orthography), and possibly replace those graphemes by other symbols to harmonize the orthographic representation of different orthographic representations (`transcription'). As a quick and easy way to specify, save, and document the decisions taken for the tokenization, we propose using an orthography profile. 
 
-A function to establish a skeleton for an orthography profile is provided here. This function takes some strings and lists detailed information on the Unicode characters in the strings.
+Provided here is a function to prepare a skeleton for an orthography profile. This function takes some strings and lists detailed information on the Unicode characters in the strings.
 }
 \usage{
 write.profile(strings, 
@@ -27,7 +27,7 @@ write.profile(strings,
   Add empty columns for further editing of the orthography profile: left context, right context, class, and translitation. See \code{\link{tokenize}} for detailed information on their usage.
 }
   \item{sep}{
-  separator to separate the strings. When NULL (by default), then unicode character definitions are used to split (as provided by UCI, ported to R by \code{stringi::stri_split_boundaries}. When \code{sep} is specified, strings are split by this separator.
+  separator to separate the strings. When NULL (by default), then unicode character definitions are used to split (as provided by UCI, ported to R by \code{stringi::stri_split_boundaries}. When \code{sep} is specified, strings are split by this separator. Often useful is \code{sep = ""} to split by unicode codepoints (see examples below).
 }
   \item{file.out}{
   Filename for writing the profile to disk. When \code{NULL} the profile is returned as an R dataframe consisting of strings.
@@ -64,5 +64,7 @@ write.profile(example, sep = "")
 write.profile(example, normalize = "NFC", sep = "")
 # NFD normalization gives yet another structure of the codepoints
 write.profile(example, normalize = "NFD", sep = "")
-
+# note that NFC and NFD normalization are identical under unicode character definitions!
+write.profile(example, normalize = "NFD")
+write.profile(example, normalize = "NFC")
 }
