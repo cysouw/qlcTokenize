@@ -17,6 +17,10 @@ write.profile <- function(strings
     transcode <- stri_trans_nfc
   } else if (normalize == "NFD") {
     transcode <- stri_trans_nfd
+    # default splitting in NFD is set to sep = ""
+    if (is.null(sep)) {
+      sep <- ""
+    }
   } 
   strings <- transcode(strings)
   
