@@ -10,17 +10,17 @@ This function is the main function to produce, test and apply orthography profil
 }
 \usage{
 tokenize(strings, 
-  orthography.profile = NULL, transliterate = NULL,
+  profile = NULL, transliterate = NULL,
   parsing = "global", ordering = c("size", "context"),
   sep = " ", missing = "\u2047", normalize = "NFC",
-  context = FALSE, case.insensitive = FALSE, silent = FALSE,
+  literal = TRUE, case.insensitive = FALSE, silent = FALSE,
   file.out = NULL)
 }
 \arguments{
   \item{strings}{
   Vector of strings to the tokenized.
 }
-  \item{orthography.profile}{
+  \item{profile}{
   Orthography profile specifying the graphemes for the tokenization, and possibly any replacements of the available graphemes. Can be a reference to a file or an R object. If NULL then the orthography profile will be created on the fly using the defaults of \code{write.profile}.
 }
   \item{transliterate}{
@@ -41,8 +41,8 @@ tokenize(strings,
   \item{normalize}{
   Which normalization to use, defaults to "NFC". Other option is "NFD". Any other input will result in no normalisation being performed.
 }
-  \item{context}{
-  Logical: should contexts be considered in the tokenization? By default, this function does not assume any contexts to be specified. If \code{context = TRUE} then the function assumes that there are columns called \code{left} (for the left context) and \code{right} (for the right context), and optionally a column called \code{class} (for the specification of grapheme-classes) in the orthography profile. These are hard-coded names, so please adapt your orthography profile accordingly. The columns \code{left} and \code{right} allow for regular expression to specify context.
+  \item{literal}{
+  Logical: should contexts be considered in the tokenization? By default, this function does not assume any contexts to be specified, i.e. match literal. If \code{context = TRUE} then the function assumes that there are columns called \code{left} (for the left context) and \code{right} (for the right context), and optionally a column called \code{class} (for the specification of grapheme-classes) in the orthography profile. These are hard-coded names, so please adapt your orthography profile accordingly. The columns \code{left} and \code{right} allow for regular expression to specify context.
 
 When \code{context = FALSE} internally the matching of graphemes is done exact, i.e. without using regular expressions. When \code{context = TRUE} ICU-style regular expression (see \code{strgi:stringi_search_regex}) are used, so any reserved characters have to be escaped in the orthography profile. Specifically, add a slash "\" before any occurrence of the characters \code{".|()[]{}^$*+?"} in your profile (except of course when these characters are used in their regular expression meaning).
 }
