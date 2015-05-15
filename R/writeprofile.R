@@ -10,6 +10,8 @@ write.profile <- function(strings
                          , sep = NULL
                          , file.out = NULL) {
   
+  strings <- as.character(strings)
+  
   # normalization
   if (is.null(normalize)) {
     transcode <- identity
@@ -61,10 +63,17 @@ write.profile <- function(strings
   }
 
   # return result as data frame, or write to file when "file" is specified
+  result <- as.data.frame(graphemes, stringsAsFactors = FALSE)
+  rownames(result) <- NULL
+  
+  if (ncol(result) == 1) {
+    colnames(result) <- "graphemes"
+  }
+  
   if (is.null(file.out)) {
-    result <- as.data.frame(graphemes, stringsAsFactors = FALSE)
-    rownames(result) <- NULL
+    
     return(result)
+    
   } else {
     write.table(graphemes
                 , file = file.out
