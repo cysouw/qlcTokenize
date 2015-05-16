@@ -42,9 +42,9 @@ tokenize(strings,
   Which normalization to use, defaults to "NFC". Other option is "NFD". Any other input will result in no normalisation being performed.
 }
   \item{literal}{
-  Logical: should contexts be considered in the tokenization? By default, this function does not assume any contexts to be specified, i.e. match literal. If \code{context = TRUE} then the function assumes that there are columns called \code{left} (for the left context) and \code{right} (for the right context), and optionally a column called \code{class} (for the specification of grapheme-classes) in the orthography profile. These are hard-coded names, so please adapt your orthography profile accordingly. The columns \code{left} and \code{right} allow for regular expression to specify context.
+  Logical: should contexts be considered in the tokenization? By default, this function does not assume any contexts to be specified, i.e. match literal. If \code{context = TRUE} then the function checks whether there are columns called \code{left} (for the left context) and \code{right} (for the right context), and optionally a column called \code{class} (for the specification of grapheme-classes) in the orthography profile. These are hard-coded names, so please adapt your orthography profile accordingly. The columns \code{left} and \code{right} allow for regular expression to specify context.
 
-When \code{context = FALSE} internally the matching of graphemes is done exact, i.e. without using regular expressions. When \code{context = TRUE} ICU-style regular expression (see \code{strgi:stringi_search_regex}) are used, so any reserved characters have to be escaped in the orthography profile. Specifically, add a slash "\" before any occurrence of the characters \code{".|()[]{}^$*+?"} in your profile (except of course when these characters are used in their regular expression meaning).
+When \code{literal = TRUE} internally the matching of graphemes is done exact, i.e. without using regular expressions. When \code{literal = FALSE} ICU-style regular expression (see \code{strgi:stringi_search_regex}) are used, so any reserved characters have to be escaped in the orthography profile. Specifically, add a slash "\" before any occurrence of the characters \code{".|()[]{}^$*+?"} in your profile (except of course when these characters are used in their regular expression meaning).
 }
   \item{case.insensitive}{
   By default, there is no case matching, so "A" and "a" are different graphemes. The option \code{case.incensitive = TRUE} applies a simple ICU "u_toupper" as made available in the \code{stringi} package. This should give the desired results in most cases, though for special orthographies the case mapping might need to be specified explicitly. In that case, consider writing a profile specifying the case mapping.
@@ -82,7 +82,9 @@ When \code{file} is specified, these three tables will be written to three diffe
 Moran & Cysouw (forthcoming)
 }
 \note{
-Note that overlapping matching does not (yet) work with regex matching when \code{context = TRUE}. That means that for example "aa" is only found once in "aaa". In some special cases this might lead to problems that might have to be explicitly specified in the profile, e.g. a grapheme "aa" with a left context "a". See examples below.
+Note that overlapping matching does not (yet) work. That means that for example "aa" is only found once in "aaa". In some special cases this might lead to problems that might have to be explicitly specified in the profile, e.g. a grapheme "aa" with a left context "a". See examples below.
+
+Regular expressions are acceptable in the column `graphemes`. Back references in the transliteration  column are not possible (yet).
 }
 \author{
 Michael Cysouw <cysouw@mac.com>

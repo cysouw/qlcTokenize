@@ -146,7 +146,7 @@ tokenize <- function(strings
       for (i in classes) {
         left <- gsub(i, classes.regex[i], left, fixed = TRUE)
         right <- gsub(i, classes.regex[i], right, fixed = TRUE)
-        graphs <- gsub(i, classes.regex[i], graphs, fixes = TRUE)
+        graphs <- gsub(i, classes.regex[i], graphs, fixed = TRUE)
       }
     }
     
@@ -183,7 +183,7 @@ tokenize <- function(strings
     }
  
     # ordering by existing of context
-    if (l_exists || r_exists) {   
+    if (!literal && (l_exists || r_exists)) {   
       context <- (left != "" | right != "") 
     } else {
       context <- rep(T, times = length(graphs))        
@@ -192,7 +192,7 @@ tokenize <- function(strings
     # ordering by frequency of occurrence
     if (sum(!is.na(pmatch(ordering,"frequency"))) > 0) {
       frequency <- - stri_count_fixed(all
-                         , pattern = x
+                         , pattern = contexts
                          , literal = literal
                          , case_insensitive = case.insensitive
                          , overlap =  TRUE)
@@ -271,11 +271,11 @@ tokenize <- function(strings
     taken <- rep(NA, times = nchar(all))
     
     # select matches
-    selected <- sapply(1:length(matches), test_match)
+    selected <- sapply(1:length(matches), test_match, simplify = FALSE)
     
     # count number of matches per rule
     matched_rules <- sapply(selected, dim)[1,]
-    
+      
     # insert internal separator
     where_sep <- stri_locate_all_fixed(all, internal_sep)[[1]][,1]
     taken[where_sep] <- internal_sep
@@ -297,7 +297,7 @@ tokenize <- function(strings
     }
     
 		# =================
-    # function to turn matches into tokenized strings
+    # functions to turn matches into tokenized strings
     reduce <- function(taken) {
  
       # replace longer graphs with NA, then na.omit
@@ -308,11 +308,12 @@ tokenize <- function(strings
           }
         })
       })
-      taken <- na.omit(taken)
-        
-      # remove internal separator at start and end
-      # they were added to identify NAs at start or finish
-      taken <- tail(head(taken, -1), -1) 
+      result <- na.omit(taken)
+      
+      return(result)
+    }
+      
+    postprocess <- function(taken) {
       
       # bind together tokenized parts with user separator
       taken <- paste(taken, collapse = user_sep)
@@ -322,17 +323,18 @@ tokenize <- function(strings
       
       # remove user_sep at start and end
       result <- substr(result, 2, nchar(result)-1)
+      result <- result[-1]
       
       return(result)
     }
 		# =================
     
     # make one string of the parts selected
-    tokenized <- reduce(taken)
+    tokenized <- postprocess(reduce(taken))
 
     # make one string of transliterations
 		if (!is.null(transliterate)) {
-      transliterated <- reduce(transliterated)
+      transliterated <- postprocess(reduce(transliterated))
 		}
     
   # ---------------------------------------------------------
@@ -344,36 +346,76 @@ tokenize <- function(strings
     # preparations
 		all.matches <- do.call(rbind,matches)[,1]
 		position <- 1
-		taken <- c()
-    frequency <- rep.int(x = 0, times = length(contexts))
+		tokenized <- c()
+    transliterated <- c()
+    missing_chars <- c()
+    matched_rules <- rep.int(x = 0, times = length(contexts))
+		where_sep <- stri_locate_all_fixed(all, internal_sep)[[1]][,1]
 		
-		graphs_match_list <- rep(graphs, times = sapply(matches, dim)[1,])
-    contexts_match_list <- rep(1:length(contexts), times = sapply(matches, dim)[1,])
-    
+		graphs_match_list <- unlist(matched_parts)
+    contexts_match_list <- rep(1:length(matches)
+                               , times = sapply(matches, dim)[1,]
+                               )   
 		if (!is.null(transliterate)) {
-			trans_match_list <- rep(trans, times = sapply(matches, dim)[1,])
-		} else {
-      trans_match_list <- graphs_match_list
+			trans_match_list <- rep(trans
+                              , times = sapply(matches, dim)[1,]
+                              )
 		}
 		
 		# loop through all positions and take first match
 		while(position <= nchar(all)) {
 			
-			hit <- which(all.matches == position)[1]
-			if (is.na(hit)) {
-				taken <- c(taken, missing)
-				position <- position + 1
-			} else {
-				taken <- c(taken, trans_match_list[hit])
-				position <- position + nchar(graphs_match_list[hit])
-        rule <- contexts_match_list[hit]
-        frequency[rule] <- frequency[rule] + 1
-			}
+      if (position %in% where_sep) {
+        tokenized <- c(tokenized, internal_sep)
+        if (!is.null(transliterate)) {
+          transliterated <- c(transliterated, internal_sep)
+        }
+        position <- position +1
+      } else {
+      
+  			hit <- which(all.matches == position)[1]
+  			if (is.na(hit)) {
+  				tokenized <- c(tokenized, missing)
+          missing_chars <- c(missing_chars, graphs_match_list[hit])
+  				if (!is.null(transliterate)) {
+            transliterated <- c(transliterated, missing)
+  				}
+  				position <- position + 1
+  			} else {
+  				tokenized <- c(tokenized, graphs_match_list[hit])
+  				if (!is.null(transliterate)) {
+  				  transliterated <- c(transliterated, trans_match_list[hit])
+  				}
+  				position <- position + nchar(graphs_match_list[hit])
+          rule <- contexts_match_list[hit]
+          matched_rules[rule] <- matched_rules[rule] + 1
+  			}
+      }
 		}
-		
-		taken <- tail(head(taken,-1),-1)
-		taken <- paste(taken, collapse =  user_sep)
-		
+
+    # =============
+		postprocess <- function(taken) {
+		  
+		  # bind together tokenized parts with user separator
+		  taken <- paste(taken, collapse = user_sep)
+		  
+		  # Split string by internal separator
+		  result <- strsplit(taken, split = internal_sep)[[1]]
+		  
+		  # remove user_sep at start and end
+		  result <- substr(result, 2, nchar(result)-1)
+		  result <- result[-1]
+		  
+		  return(result)
+		}
+		# =============
+ 
+    # postprocessing 
+    tokenized <- postprocess(tokenized)
+		if (!is.null(transliterate)) {
+      transliterated <- postprocess(transliterated)
+		}
+    
 	} else {
     stop(paste0("The tokenization method \"",parsing,"\" is not defined"))
 	}
@@ -383,12 +425,14 @@ tokenize <- function(strings
   # ----------------------
   
   if (is.null(transliterate)) {
+    
     strings.out <- data.frame(
       cbind(originals = originals
             , tokenized = tokenized
             )
       , stringsAsFactors = FALSE
       )
+    
   } else {
     
     strings.out <- data.frame(
@@ -425,10 +469,6 @@ tokenize <- function(strings
   profile.out <- data.frame(profile[graph_order,]
                         , stringsAsFactors = FALSE
                         )
-  if (ncol(profile) == 1) {
-    colnames(profile.out) <- "graphemes"
-  }
-  
   profile.out <- cbind(matched_rules, profile.out)
   
   # --------------
