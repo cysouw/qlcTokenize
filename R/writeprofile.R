@@ -75,7 +75,7 @@ write.profile <- function(strings
     return(result)
     
   } else {
-    write.table(graphemes
+    write.table(result
                 , file = file.out
                 , quote = FALSE
                 , sep = "\t"
