@@ -291,7 +291,7 @@ tokenize <- function(strings
       transliterated <- taken
       sapply(1:length(selected), function(x) {
         apply(selected[[x]], 1, function(y) {
-          transliterated[y[1]:y[2]] <- trans[x]
+          transliterated[y[1]:y[2]] <<- trans[x]
         })
       })
     }
