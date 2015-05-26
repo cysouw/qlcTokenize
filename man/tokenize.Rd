@@ -11,9 +11,9 @@ This function is the main function to produce, test and apply orthography profil
 \usage{
 tokenize(strings, 
   profile = NULL, transliterate = NULL,
-  parsing = "global", ordering = c("size", "context"),
+  method = "global", ordering = c("size", "context", "reverse"),
   sep = " ", missing = "\u2047", normalize = "NFC",
-  literal = TRUE, case.insensitive = FALSE, silent = FALSE,
+  literal = FALSE, silent = FALSE,
   file.out = NULL)
 }
 \arguments{
@@ -26,11 +26,11 @@ tokenize(strings,
   \item{transliterate}{
   Default \code{NULL}, meaning no transliteration is to be performed. Alternatively, specify the name of the column in the orthography profile that should be used for replacement.
 }
-  \item{parsing}{
+  \item{method}{
   Method to be used for parsing the strings into graphemes. Currently two options are implemented: \code{global} and \code{linear}. See Details for further explanation.
 }
   \item{ordering}{
-  Method for ordering. Currently three different methods are implemented, which can be combined (see Details below): \code{size}, \code{context}, and \code{frequency}. Use \code{NULL} to prevent ordering and use the top to bottom order as specified in the orthography profile.
+  Method for ordering. Currently three different methods are implemented, which can be combined (see Details below): \code{size}, \code{context}, \code{reverse} and \code{frequency}. Use \code{NULL} to prevent ordering and use the top to bottom order as specified in the orthography profile.
 }
   \item{sep}{
   Separator to be inserted between graphemes. Defaults to space. This function assumes that the separator specified here does not occur in the data. If it does, unexpected things might happen. Consider removing the chosen seperator from your strings first, e.g. by using \code{\link{gsub}}.
@@ -46,9 +46,9 @@ tokenize(strings,
 
 When \code{literal = TRUE} internally the matching of graphemes is done exact, i.e. without using regular expressions. When \code{literal = FALSE} ICU-style regular expression (see \code{strgi:stringi_search_regex}) are used, so any reserved characters have to be escaped in the orthography profile. Specifically, add a slash "\" before any occurrence of the characters \code{".|()[]{}^$*+?"} in your profile (except of course when these characters are used in their regular expression meaning).
 }
-  \item{case.insensitive}{
-  By default, there is no case matching, so "A" and "a" are different graphemes. The option \code{case.incensitive = TRUE} applies a simple ICU "u_toupper" as made available in the \code{stringi} package. This should give the desired results in most cases, though for special orthographies the case mapping might need to be specified explicitly. In that case, consider writing a profile specifying the case mapping.
-}
+%  \item{case.insensitive}{
+%  By default, there is no case matching, so "A" and "a" are different graphemes. The option \code{case.incensitive = TRUE} applies a simple ICU "u_toupper" as made available in the \code{stringi} package. This should give the desired results in most cases, though for special orthographies the case mapping might need to be specified explicitly. In that case, consider writing a profile specifying the case mapping.
+%}
   \item{silent}{
   Logical: by default missing characters in the strings are reported with a warning. use \code{silent = TRUE} to supress these warnings.
   }
@@ -59,7 +59,7 @@ When \code{literal = TRUE} internally the matching of graphemes is done exact, i
 \details{
 Given a set of graphemes, there are at least two different methods to tokenize strings. The first is called \code{global} here: this approach takes the first grapheme, matches this grapheme globally at all places in the string, and then turns to the next string. The other approach is called \code{linear} here: this approach walks through the string from left to right. At the first character it looks through all graphemes whether there is any match, and then walks further to the end of the match and starts again. In some special cases these two methods can lead to different results (see Examples for an example).
 
-The ordering or the lines in the ortography profile is of crucial importance, and different orderings will lead to radically different results. To simply use the top to bottom ordering as specified in the profile, use \code{order = NULL}. Currently, there are three different ordering strategies implemented: \code{size}, \code{context}, and \code{frequency}. By specifying more than one in a vector, these orderings are used to break ties, e.g. \code{c("size, frequency")} will first order by size, and for those with the same size, it will order by frequency. For lines that are still tied (i.e. the have the same size and frequency) the order will fall back to the reverse order as attested in the profile.
+The ordering or the lines in the ortography profile is of crucial importance, and different orderings will lead to radically different results. To simply use the top to bottom ordering as specified in the profile, use \code{order = NULL}. Currently, there are four different ordering strategies implemented: \code{size}, \code{context}, \code{reverse} and \code{frequency}. By specifying more than one in a vector, these orderings are used to break ties, e.g. \code{c("size, frequency", "reverse")} will first order by size, and for those with the same size, it will order by frequency. For lines that are still tied (i.e. the have the same size and frequency) the order will reverse order as attested in the profile. Reversing order can be useful, because hand-written profiles tend to put general rules before specific rules, which mostly should be applied in reverse order.
 
 \itemize{
 \item \code{size}: order the lines in the profile by the size of the grapheme, largest first. Size is measured by number of Unicode characters after normalization as specified in the option \code{normalize}. For example, \code{é} has a size of 1 with \code{normalize = "NFC"}, but a size of 2 with \code{normalize = "NFD"}.
@@ -93,11 +93,10 @@ Michael Cysouw <cysouw@mac.com>
 See also \code{\link{write.profile}} for preparing a skeleton orthography profile.
 }
 \examples{
-% \dontrun{
-% # gives error in R CMD check, because of cyrillic characters 
-% # simple example with interesting warning and error reporting
-% tokenize("AАBВ",c("A","B")
-% }
+# simple example with interesting warning and error reporting
+(string <- "\u0041\u0410\u0042\u0412")
+tokenize(string,c("A","B"))
+
 # make an ad-hoc orthography profile
 profile <- cbind(
     graphemes = c("a","ä","n","ng","ch","sch"), 
@@ -119,7 +118,7 @@ tokenize("abbb", profile , context = TRUE, order = NULL)
 }
 
 # different parsing methods can lead to different results
-tokenize("abc", c("bc","ab","a","c"), order = NULL, parsing = "global")$strings
-tokenize("abc", c("bc","ab","a","c"), order = NULL, parsing = "linear")$strings
+tokenize("abc", c("bc","ab","a","c"), order = NULL, method = "global")$strings
+tokenize("abc", c("bc","ab","a","c"), order = NULL, method = "linear")$strings
 }
 

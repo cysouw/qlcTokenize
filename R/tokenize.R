@@ -5,13 +5,12 @@
 tokenize <- function(strings
                       , profile = NULL
                       , transliterate = NULL
-                      , parsing = "global"
-                      , ordering = c("size","context")
+                      , method = "global"
+                      , ordering = c("size","context","reverse")
                       , sep = " "
                       , missing = "\u2047"
                       , normalize = "NFC"
-                      , literal = TRUE
-                      , case.insensitive = FALSE
+                      , literal = FALSE
                       , silent = FALSE
                       , file.out = NULL) {
  
@@ -19,8 +18,11 @@ tokenize <- function(strings
   # preprocess data
   # ---------------
   
+  # option gives errors, so removed
+  case.insensitive = FALSE
+  
 	# separators
-	internal_sep <- intToUtf8(1110000)
+	internal_sep <-  intToUtf8(1110000)
 	user_sep <- sep
 
 	# normalization
@@ -29,6 +31,7 @@ tokenize <- function(strings
 	} else if (normalize == "NFD") {
 	  transcode <- stri_trans_nfd
 	} else {
+    warning("Only the normalization-options NFC and NFD are implemented. No normalization will be performed.")
 	  transcode <- identity
 	}
 	
@@ -49,7 +52,7 @@ tokenize <- function(strings
     # make new orthography profile
     if (normalize == "NFC") {
       profile  <- write.profile(strings
-                                , normalize = "NFC"
+                                , normalize = normalize
                                 , sep = NULL
                                 , info = FALSE
                                 )  
@@ -122,7 +125,8 @@ tokenize <- function(strings
     right <- gsub("\\$$", internal_sep, right)
     right <- gsub(tmp, "\\$", right, fixed = TRUE)
     
-    left <- gsub("^\\^", internal_sep, left) 
+    left <- gsub("^\\^", internal_sep, left)
+    left <- gsub("([^\\[])\\^", paste0("\\1",internal_sep), left)
     
     graphs <- gsub("\\$", tmp, graphs, fixed = TRUE)
     graphs <- gsub("\\$$", internal_sep, graphs)
@@ -189,22 +193,31 @@ tokenize <- function(strings
       context <- rep(T, times = length(graphs))        
     }
     
+    # reverse ordering
+    if (sum(!is.na(pmatch(ordering,"reverse"))) > 0) {
+      reverse <- length(graphs):1
+    } else {
+      reverse  <- 1:length(graphs)
+    }
+    
     # ordering by frequency of occurrence
     if (sum(!is.na(pmatch(ordering,"frequency"))) > 0) {
-      frequency <- - stri_count_fixed(all
+      frequency <- stri_count_regex(all
                          , pattern = contexts
                          , literal = literal
                          , case_insensitive = case.insensitive
-                         , overlap =  TRUE)
+                         )
     } else {
       frequency <- rep(T, times = length(graphs)) 
     }
       
     # order according to dimensions chosen by user in "ordering"    
-    dimensions <- list(  size = size
-                       , context = context
-                       , frequency = frequency)
-    graph_order <- rev(do.call(order, dimensions[ordering]))
+    dimensions <- list(  size = - size # largest size first
+                       , context = - context # with context first
+                       , reverse = reverse # reverse first
+                       , frequency = frequency # lowest frequency first
+                       )
+    graph_order <- do.call(order, dimensions[ordering])
 
   }
   
@@ -236,7 +249,7 @@ tokenize <- function(strings
   # tokenize data, either global or linear
   # --------------------------------------
 
-	if (!is.na(pmatch(parsing,"global"))) {
+	if (!is.na(pmatch(method,"global"))) {
 
     # =================
 		# function to check whether the match is still free
@@ -341,7 +354,7 @@ tokenize <- function(strings
   # finite-state transducer behaviour when parsing = "linear"
   # ---------------------------------------------------------	
 	
-	} else if (!is.na(pmatch(parsing,"linear"))) {
+	} else if (!is.na(pmatch(method,"linear"))) {
 		
     # preparations
 		all.matches <- do.call(rbind,matches)[,1]
@@ -417,7 +430,7 @@ tokenize <- function(strings
 		}
     
 	} else {
-    stop(paste0("The tokenization method \"",parsing,"\" is not defined"))
+    stop(paste0("The tokenization method \"",method,"\" is not defined"))
 	}
 	
   # ----------------------
