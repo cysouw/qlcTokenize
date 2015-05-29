@@ -335,7 +335,7 @@ tokenize <- function(strings
       result <- strsplit(taken, split = internal_sep)[[1]]
       
       # remove user_sep at start and end
-      result <- substr(result, 2, nchar(result)-1)
+      result <- substr(result, 1, nchar(result))
       result <- result[-1]
       
       return(result)
