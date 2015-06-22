@@ -1,0 +1,137 @@
+wells <- scan("IPAwells.txt", what = "character", comment.char="#")
+wells <- read.table("IPAwells.txt"#
+					, stringsAsFactors = F#
+					, comment.char = "#"#
+					, sep = "\t"#
+					, header = T#
+					)
+str(wells)
+head(wells)
+moran <- read.table("IPAmoran.txt"#
+					, stringsAsFactors = F#
+					, comment.char = "#"#
+					, sep = "\t"#
+					, header = T#
+					)
+str(moran)
+library(qlcTokenize)
+?write.profile
+tests <- scan("IPAtests.txt"#
+			  , what = "character"#
+			  , comment.char = "#"#
+			  )#
+testchars <- write.profile(tests#
+						   , normalize = "NFD"#
+						   , info = FALSE#
+						   , sep = "")
+str(testchars)
+test
+tests
+tests <- scan("IPAtests.txt"#
+			  , what = "character"#
+			  , comment.char = "#"#
+			  , sep = "\n"#
+			  )
+tests
+testchars <- write.profile(tests#
+						   , normalize = "NFD"#
+						   , info = FALSE#
+						   , sep = "")
+testchars
+all <- unique(wells$graphemes, moran$graphemes, testchars$graphemes)
+str(wells$graphemes)
+str(moran$graphemes)
+str(testchars$graphemes)
+str(testchars)
+str(as.charachter(testchars$graphemes))
+str(as.character(testchars$graphemes))
+write.profile("asdfhjaklwe")$graphemes
+write.profile(tests[1])$graphemes
+write.profile(tests[2])$graphemes
+write.profile(tests[3])$graphemes
+write.profile(tests[4])$graphemes
+write.profile(tests)$graphemes
+write.profile(tests[1],n="NFD",sep="")$graphemes
+write.profile(tests[2],n="NFD",sep="")$graphemes
+write.profile(tests[3],n="NFD",sep="")$graphemes
+write.profile(tests[4],n="NFD",sep="")$graphemes
+write.profile(tests,n="NFD",sep="")$graphemes
+testchars <- write.profile(tests#
+						   , normalize = "NFD"#
+						   , info = TRUE#
+						   , sep = "")
+testchars$graphemes
+all <- unique(wells$graphemes, moran$graphemes, testchars$graphemes)
+all <- unique(c(wells$graphemes, moran$graphemes, testchars$graphemes))
+all
+dim(wells)
+dim(moran)
+write.profile(all,editing = T, file = "IPAprofile.tsv")
+all <- unique(c(wells$graphemes, moran$graphemes))
+length(all)
+write.profile(all,editing = T, file = "IPAprofile.tsv")
+write.profile(moran)
+moran
+str(moran)
+write.profile(moran$graphemes)
+wells
+testchars
+all <- unique(c(wells$graphemes, moran$graphemes))
+write.profile(all,editing = F, file = "IPAprofile2.tsv")
+b_in <- scan("/Users/cysouw/Documents/Github/R/qlcTokenize/tests/testthat/Brazilian_Portuguese_input.txt", what="character", sep ="\n")#
+#
+b_out <- scan("/Users/cysouw/Documents/Github/R/qlcTokenize/tests/testthat/Brazilian_Portuguese_output2.txt", what="character", sep="\n")#
+#
+library(qlcTokenize)#
+tok <- tokenize(b_in, profile="/Users/cysouw/Documents/Github/Writing/Unicode Cookbook/profiles/IPA_graphemes.tsv",normalize="NFD")
+tok <- tokenize(b_in, profile="/Users/cysouw/Documents/Github/Writing/Unicode Cookbook/profiles/strictIPA2005_graphemes.tsv",normalize="NFD")
+tok$strings
+str(b_in)
+b_in
+?qlcTokenize
+cbind(test= c("test","testf"),test2=c("test2","test3"))
+as.data.frame(cbind(test= c("test","testf"),test2=c("test2","test3")))
+as.data.frame(cbind(test= c("test","testf"),test2=c("test2","test3")),stringsAsFactors=F)
+?head
+head(1:10,-1)
+1:10
+tail(1:10,-1)
+b_in <- scan("/Users/cysouw/Documents/Github/R/qlcTokenize/tests/testthat/Brazilian_Portuguese_input.txt", what="character", sep ="\n")
+library(qlcTokenize)#
+tok <- tokenize(b_in, profile="/Users/cysouw/Documents/Github/Writing/Unicode Cookbook/profiles/strictIPA2005_graphemes.tsv",normalize="NFD")
+tok$strings
+library(qlcTokenize)#
+tok <- tokenize(b_in, profile="/Users/cysouw/Documents/Github/Writing/Unicode Cookbook/profiles/strictIPA2005_graphemes.tsv",normalize="NFD",sep.replace="#")
+b_in <- scan("/Users/cysouw/Documents/Github/R/qlcTokenize/tests/testthat/Brazilian_Portuguese_input.txt", what="character", sep ="\n")
+library(qlcTokenize)
+tok <- tokenize(b_in, profile="/Users/cysouw/Documents/Github/Writing/Unicode Cookbook/profiles/strictIPA2005_graphemes.tsv",normalize="NFD",sep.replace="#")
+tok$strings
+b_out <- scan("/Users/cysouw/Documents/Github/R/qlcTokenize/tests/testthat/Brazilian_Portuguese_output2.txt", what="character", sep="\n")
+all.equal(tok$strings$tokenized[1], b_out)
+text_in <- scan("Zurich_German_input.txt", what="character", sep ="\n")#
+text_out <- scan("Zurich_German_output2.txt", what="character", sep="\n")#
+#
+tok <- tokenize(text_in, profile="/Users/cysouw/Documents/Github/Writing/Unicode Cookbook/profiles/strictIPA2005_graphemes.tsv",normalize="NFD",sep.replace="#")#
+#
+all.equal(tok$strings$tokenized[1], b_out)
+setwd("/Users/cysouw/Documents/Github/R/qlcTokenize/tests/testthat/")
+text_in <- scan("Zurich_German_input.txt", what="character", sep ="\n")#
+text_out <- scan("Zurich_German_output2.txt", what="character", sep="\n")#
+#
+tok <- tokenize(text_in, profile="/Users/cysouw/Documents/Github/Writing/Unicode Cookbook/profiles/strictIPA2005_graphemes.tsv",normalize="NFD",sep.replace="#")#
+#
+all.equal(tok$strings$tokenized[1], b_out)
+text_in
+text_out
+tok$strings$tokenized[1]
+text_in <- scan("Zurich_German_input.txt", what="character", sep ="\n")#
+text_out <- scan("Zurich_German_output2.txt", what="character", sep="\n")#
+#
+tok <- tokenize(text_in, profile="/Users/cysouw/Documents/Github/Writing/Unicode Cookbook/profiles/strictIPA2005_graphemes.tsv",normalize="NFD",sep.replace="#")#
+#
+all.equal(tok$strings$tokenized[1], b_out)
+tok$strings$tokenized[1]
+text_out
+all.equal(tok$strings$tokenized[1], text_out)
+tmp <- tok$strings$tokenized[1]
+table(strsplit(tmp," ")[[1]])
