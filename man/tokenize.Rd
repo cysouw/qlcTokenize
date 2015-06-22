@@ -12,7 +12,7 @@ This function is the main function to produce, test and apply orthography profil
 tokenize(strings, 
   profile = NULL, transliterate = NULL,
   method = "global", ordering = c("size", "context", "reverse"),
-  sep = " ", missing = "\u2047", normalize = "NFC",
+  sep = " ", sep.replace = NULL, missing = "\u2047", normalize = "NFC",
   literal = FALSE, silent = FALSE,
   file.out = NULL)
 }
@@ -35,6 +35,9 @@ tokenize(strings,
   \item{sep}{
   Separator to be inserted between graphemes. Defaults to space. This function assumes that the separator specified here does not occur in the data. If it does, unexpected things might happen. Consider removing the chosen seperator from your strings first, e.g. by using \code{\link{gsub}}.
 }
+  \item{sep.replace}{
+  Sometimes, the chosen separator (see above) occurs in the strings to be parsed. This is technically not a problem, but the result might show unexpected sequences. When \code{sep.replace} is specified, this marking is inserted in the string at those places where the \code{sep} marker occurs. Typical usage in linguistics would be \code{sep.replace = "#"}.
+  }
   \item{missing}{
   Character to be inserted at transliteration when no transliteration is specified. Defaults to DOUBLE QUESTION MARK at U+2047.
 }

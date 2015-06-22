@@ -8,6 +8,7 @@ tokenize <- function(strings
                       , method = "global"
                       , ordering = c("size","context","reverse")
                       , sep = " "
+                      , sep.replace = NULL
                       , missing = "\u2047"
                       , normalize = "NFC"
                       , literal = FALSE
@@ -328,15 +329,23 @@ tokenize <- function(strings
       
     postprocess <- function(taken) {
       
+      # remove last (don't know why...)
+      taken <- head(taken, -1)
+ 
+      # remove user_sep at start and end
+      taken <- head(taken, -1)
+      taken <- tail(taken, -1)
+      
+      # replace separator
+      if (!is.null(sep.replace)) {
+        taken[taken == user_sep] <- sep.replace
+      }
+      
       # bind together tokenized parts with user separator
       taken <- paste(taken, collapse = user_sep)
       
       # Split string by internal separator
       result <- strsplit(taken, split = internal_sep)[[1]]
-      
-      # remove user_sep at start and end
-      result <- substr(result, 1, nchar(result))
-      result <- result[-1]
       
       return(result)
     }
