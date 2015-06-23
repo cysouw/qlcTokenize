@@ -38,13 +38,13 @@ write.profile <- function(strings
   
   # add columns for editing when 'editing = TRUE'
   if (editing) {
-    graphemes <- cbind(  left = ""
-                       , graphemes = chars
-                       , right = ""
-                       , class = ""
-                       , replacements = chars)
+    Grapheme <- cbind(  Left = ""
+                       , Grapheme = chars
+                       , Right = ""
+                       , Class = ""
+                       , Replacement = chars)
   } else {
-    graphemes <- chars
+    Grapheme <- chars
   }
 
   # add frequency, codepoints and Unicode names when info = TRUE
@@ -59,15 +59,18 @@ write.profile <- function(strings
     names <- gsub("\\N{", "", names, fixed= TRUE)
     names <- gsub("}", "", names, fixed = TRUE)
     
-    graphemes <- cbind(graphemes, frequency, codepoints, names)
+    Grapheme <- cbind(Grapheme
+                       , Frequency = frequency
+                       , Codepoint = codepoints
+                       , UnicodeName = names)
   }
 
   # return result as data frame, or write to file when "file" is specified
-  result <- as.data.frame(graphemes, stringsAsFactors = FALSE)
+  result <- as.data.frame(Grapheme, stringsAsFactors = FALSE)
   rownames(result) <- NULL
   
   if (ncol(result) == 1) {
-    colnames(result) <- "graphemes"
+    colnames(result) <- "Grapheme"
   }
   
   if (is.null(file.out)) {

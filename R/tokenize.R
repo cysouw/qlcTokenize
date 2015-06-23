@@ -68,7 +68,7 @@ tokenize <- function(strings
     # use the provided profile
     if (length(profile) > 1) {
       # assume that the strings are graphemes
-      profile <- data.frame(graphemes = profile
+      profile <- data.frame(Grapheme = profile
                             , stringsAsFactors = FALSE
                             )
     } else {
@@ -87,7 +87,7 @@ tokenize <- function(strings
   }
 
   # normalise characters in profile, just to be sure
-  graphs <- transcode(profile[,"graphemes"])
+  graphs <- transcode(profile[,"Grapheme"])
   if (!is.null(transliterate)) {
     trans <- transcode(profile[,transliterate])
   }
@@ -103,18 +103,18 @@ tokenize <- function(strings
   } else {
     
     # is there contextual information?
-    l_exists <- sum(colnames(profile) == "left") == 1
-    r_exists <- sum(colnames(profile) == "right") == 1
-    c_exists <- sum(colnames(profile) == "class") == 1
+    l_exists <- sum(colnames(profile) == "Left") == 1
+    r_exists <- sum(colnames(profile) == "Right") == 1
+    c_exists <- sum(colnames(profile) == "Class") == 1
       
     # then normalise them too
     if (l_exists) { 
-      left <- transcode(profile[,"left"]) 
+      left <- transcode(profile[,"Left"]) 
     } else {
       left  <- ""
     }
     if (r_exists) {
-      right <- transcode(profile[,"right"])
+      right <- transcode(profile[,"Right"])
     } else {
       right  <- ""
     }
@@ -137,12 +137,12 @@ tokenize <- function(strings
     graphs <- gsub("^\\.", paste0("[^", internal_sep, "]"), graphs)
     
     # make classes if there is anything there
-    if (c_exists && sum(profile[,"class"] != "") > 0) {
+    if (c_exists && sum(profile[,"Class"] != "") > 0) {
       
-      classes <- unique(profile[,"class"])
+      classes <- unique(profile[,"Class"])
       classes <- classes[classes != ""]
       groups <- sapply(classes,function(x){
-        graphs[profile[,"class"] == x]
+        graphs[profile[,"Class"] == x]
         })
       classes.regex <- sapply(groups,function(x){
         paste( "((", paste( x, collapse = ")|(" ), "))", sep = "")
