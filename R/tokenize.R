@@ -86,39 +86,47 @@ tokenize <- function(strings
     profile <- profile
   }
 
+  # first-pass reordering, only getting larger graphemes on top
+  # ordering by grapheme size, if specified
+  # necessary to get regexes in right order
+  if (sum(!is.na(pmatch(ordering,"size"))) > 0) {
+    size <- nchar(stri_trans_nfd(profile[,"Grapheme"]))
+    profile <- profile[order(-size), ,drop = FALSE]
+  }
+  
   # normalise characters in profile, just to be sure
   graphs <- transcode(profile[,"Grapheme"])
   if (!is.null(transliterate)) {
     trans <- transcode(profile[,transliterate])
   }
   
+  # is there contextual information?
+  l_exists <- sum(colnames(profile) == "Left") == 1
+  r_exists <- sum(colnames(profile) == "Right") == 1
+  c_exists <- sum(colnames(profile) == "Class") == 1
+
+  # then normalise them too
+  if (l_exists) { 
+    left <- transcode(profile[,"Left"]) 
+  } else {
+    left  <- ""
+  }
+  if (r_exists) {
+    right <- transcode(profile[,"Right"])
+  } else {
+    right  <- ""
+  }
+  
   # -----------------------------------------
   # prepare regexes with context from profile
   # -----------------------------------------
- 
+  
   if (literal) {
-      
-      contexts <- graphs
-      
+    
+    contexts <- graphs
+    
   } else {
     
-    # is there contextual information?
-    l_exists <- sum(colnames(profile) == "Left") == 1
-    r_exists <- sum(colnames(profile) == "Right") == 1
-    c_exists <- sum(colnames(profile) == "Class") == 1
-      
-    # then normalise them too
-    if (l_exists) { 
-      left <- transcode(profile[,"Left"]) 
-    } else {
-      left  <- ""
-    }
-    if (r_exists) {
-      right <- transcode(profile[,"Right"])
-    } else {
-      right  <- ""
-    }
-  
     # replace regex boundaries with internal separator
     tmp <- intToUtf8(1110001)
     
@@ -143,10 +151,10 @@ tokenize <- function(strings
       classes <- classes[classes != ""]
       groups <- sapply(classes,function(x){
         graphs[profile[,"Class"] == x]
-        })
+      })
       classes.regex <- sapply(groups,function(x){
         paste( "((", paste( x, collapse = ")|(" ), "))", sep = "")
-        })
+      })
       
       for (i in classes) {
         left <- gsub(i, classes.regex[i], left, fixed = TRUE)
@@ -158,18 +166,18 @@ tokenize <- function(strings
     # add lookahead/lookbehind syntax and combine everything together
     left[left != ""] <- paste("(?<=", left[left != ""], ")", sep = "")
     right[right != ""] <- paste("(?=", right[right != ""], ")", sep = "")
-
+    
     # replace dot at start of left context with internal separator
     left <- gsub("(?<=."
                  , paste0("(?<!", internal_sep, ")(?<=")
                  , left
                  , fixed =  TRUE
-                 )
-
+    )
+    
     contexts <- paste0(left, graphs, right)
-
+    
   }
-
+  
   # -----------------
   # reorder graphemes
   # -----------------
@@ -182,7 +190,7 @@ tokenize <- function(strings
     
     # ordering by grapheme size
     if (sum(!is.na(pmatch(ordering,"size"))) > 0) {
-      size <- nchar(graphs)
+      size <- nchar(stri_trans_nfd(graphs))
     } else {
       size <- rep(T, times = length(graphs))
     }
@@ -328,9 +336,6 @@ tokenize <- function(strings
     }
       
     postprocess <- function(taken) {
-      
-      # remove last (don't know why...)
-      taken <- head(taken, -1)
  
       # remove user_sep at start and end
       taken <- head(taken, -1)
@@ -344,8 +349,9 @@ tokenize <- function(strings
       # bind together tokenized parts with user separator
       taken <- paste(taken, collapse = user_sep)
       
-      # Split string by internal separator
-      result <- strsplit(taken, split = internal_sep)[[1]]
+      # Split string by internal separator surrounded by user_sep
+      split <- paste0(user_sep, internal_sep, user_sep)
+      result <- strsplit(taken, split = split)[[1]]
       
       return(result)
     }
@@ -398,7 +404,9 @@ tokenize <- function(strings
   			hit <- which(all.matches == position)[1]
   			if (is.na(hit)) {
   				tokenized <- c(tokenized, missing)
-          missing_chars <- c(missing_chars, graphs_match_list[hit])
+          missing_chars <- c(missing_chars
+                             , substr(all, position, position)
+                             )
   				if (!is.null(transliterate)) {
             transliterated <- c(transliterated, missing)
   				}
@@ -491,6 +499,7 @@ tokenize <- function(strings
   profile.out <- data.frame(profile[graph_order,]
                         , stringsAsFactors = FALSE
                         )
+  if (ncol(profile.out) == 1) {colnames(profile.out) <- "Grapheme"}
   profile.out <- cbind(matched_rules, profile.out)
   
   # --------------

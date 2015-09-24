@@ -97,6 +97,7 @@ See also \code{\link{write.profile}} for preparing a skeleton orthography profil
 }
 \examples{
 # simple example with interesting warning and error reporting
+# the string might look like "AABB" but it isn't...
 (string <- "\u0041\u0410\u0042\u0412")
 tokenize(string,c("A","B"))
 
@@ -113,12 +114,10 @@ tokenize(c("Naná", "änngschä", "ach"), profile, transliterate = "Trans")
 tokenize("aaa", c("a","aa"), order = NULL)
 tokenize("aaa", c("a","aa"), order = "size")
 
-\dontrun{
 # regexmatching does not catch overlap in some special cases
-# this results in a warning instead of just parsing "ab bb" in the following example
-profile <- write.profile("ab bb", info = FALSE, editing = TRUE, sep = " ")
-tokenize("abbb", profile , context = TRUE, order = NULL)
-}
+# the following results in a warning instead of just parsing "ab bb"
+# this is clearly wrong! but it should occur exceedingly rarely
+tokenize("abbb", profile = c("ab","bb"), order = NULL)
 
 # different parsing methods can lead to different results
 tokenize("abc", c("bc","ab","a","c"), order = NULL, method = "global")$strings
