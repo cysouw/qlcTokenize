@@ -13,7 +13,7 @@ tokenize(strings,
   profile = NULL, transliterate = NULL,
   method = "global", ordering = c("size", "context", "reverse"),
   sep = " ", sep.replace = NULL, missing = "\u2047", normalize = "NFC",
-  literal = FALSE, silent = FALSE,
+  regex = FALSE, silent = FALSE,
   file.out = NULL)
 }
 \arguments{
@@ -36,18 +36,18 @@ tokenize(strings,
   Separator to be inserted between graphemes. Defaults to space. This function assumes that the separator specified here does not occur in the data. If it does, unexpected things might happen. Consider removing the chosen seperator from your strings first, e.g. by using \code{\link{gsub}}.
 }
   \item{sep.replace}{
-  Sometimes, the chosen separator (see above) occurs in the strings to be parsed. This is technically not a problem, but the result might show unexpected sequences. When \code{sep.replace} is specified, this marking is inserted in the string at those places where the \code{sep} marker occurs. Typical usage in linguistics would be \code{sep.replace = "#"}.
+  Sometimes, the chosen separator (see above) occurs in the strings to be parsed. This is technically not a problem, but the result might show unexpected sequences. When \code{sep.replace} is specified, this marking is inserted in the string at those places where the \code{sep} marker occurs. Typical usage in linguistics would be \code{sep = " ", sep.replace = "#"} adding spaces between graphemes and replacing spaces in the input string by hashes in the output string.
   }
   \item{missing}{
-  Character to be inserted at transliteration when no transliteration is specified. Defaults to DOUBLE QUESTION MARK at U+2047.
+  Character to be inserted at transliteration when no transliteration is specified. Defaults to DOUBLE QUESTION MARK at U+2047. Change this when this character appears in the input string.
 }
   \item{normalize}{
-  Which normalization to use, defaults to "NFC". Other option is "NFD". Any other input will result in no normalisation being performed.
+  Which normalization to use before tokenization, defaults to "NFC". Other option is "NFD". Any other input will result in no normalisation being performed.
 }
-  \item{literal}{
-  Logical: should contexts be considered in the tokenization? By default, this function does not assume any contexts to be specified, i.e. match literal. If \code{context = TRUE} then the function checks whether there are columns called \code{Left} (for the left context) and \code{Right} (for the right context), and optionally a column called \code{Class} (for the specification of grapheme-classes) in the orthography profile. These are hard-coded names, so please adapt your orthography profile accordingly. The columns \code{Left} and \code{Right} allow for regular expression to specify context.
-
-When \code{literal = TRUE} internally the matching of graphemes is done exact, i.e. without using regular expressions. When \code{literal = FALSE} ICU-style regular expression (see \code{strgi:stringi_search_regex}) are used, so any reserved characters have to be escaped in the orthography profile. Specifically, add a slash "\" before any occurrence of the characters \code{".|()[]{}^$*+?"} in your profile (except of course when these characters are used in their regular expression meaning).
+  \item{regex}{
+  Logical: when \code{regex = FALSE} internally the matching of graphemes is done exact, i.e. without using regular expressions. When \code{regex = TRUE} ICU-style regular expression (see \link[stringi]{stri_search_regex}) are used, so any reserved characters have to be escaped in the orthography profile. Specifically, add a slash "\" before any occurrence of the characters \code{ [](){}+*.-!?ˆ$\ } in your profile (except of course when these characters are used in their regular expression meaning).
+  
+Note that this parameter also influences whether contexts should be considered in the tokenization (internally, contextual searching uses regular expressions). By default, when \code{regex = FALSE}, context is ignored. If \code{regex = TRUE} then the function checks whether there are columns called \code{Left} (for the left context) and \code{Right} (for the right context), and optionally a column called \code{Class} (for the specification of grapheme-classes) in the orthography profile. These are hard-coded column-names, so please adapt your orthography profile accordingly. The columns \code{Left} and \code{Right} allow for regular expression to specify context.
 }
 %  \item{case.insensitive}{
 %  By default, there is no case matching, so "A" and "a" are different graphemes. The option \code{case.incensitive = TRUE} applies a simple ICU "u_toupper" as made available in the \code{stringi} package. This should give the desired results in most cases, though for special orthographies the case mapping might need to be specified explicitly. In that case, consider writing a profile specifying the case mapping.
@@ -69,6 +69,8 @@ The ordering or the lines in the ortography profile is of crucial importance, an
 
 \item \code{context:} order the lines by whether they have any context specified, lines with context coming first. Note that this only works when the option \code{context = TRUE} is also chosen.
 
+\item \code{reverse:} order the lines from bottom to top.
+
 \item \code{frequency}: order the lines by the frequency with which they match in the specified strings before tokenization, least frequent coming first. This frequency of course depends crucially on the available strings, so it will lead to different orderings when applied to different data. Also note that this frequency is (necessarily) measured before graphemes are identified, so these ordering frequencies are not the same as the final frequencies shown in the outpur. Frequency of course also strongly differs on whether context is used for the matching through \code{context = TRUE}.
 }
 }
@@ -85,9 +87,27 @@ When \code{file} is specified, these three tables will be written to three diffe
 Moran & Cysouw (forthcoming)
 }
 \note{
-Note that overlapping matching does not (yet) work. That means that for example "aa" is only found once in "aaa". In some special cases this might lead to problems that might have to be explicitly specified in the profile, e.g. a grapheme "aa" with a left context "a". See examples below.
+When \code{regex = TRUE}, regular expressions are acceptable in the columns `Grapheme`, 'Left' and 'Right'. Backreferences in the transliteration column are not possible (yet). When regular expressions are allowed, all literal uses of special regex-characters have to be escaped! Any literal occurrence of the following characters has then to be preceded by a backslash \code{ \ }.
 
-Regular expressions are acceptable in the column `Grapheme`. Back references in the transliteration  column are not possible (yet).
+\itemize{
+\item - (U+002D, HYPHEN-MINUS)
+\item ! (U+0021, EXCLAMATION MARK)
+\item ? (U+003F, QUESTION MARK)
+\item . (U+002E, FULL STOP)
+\item ( (U+0028, LEFT PARENTHESIS)
+\item ) (U+0029, RIGHT PARENTHESIS)
+\item [ (U+005B, LEFT SQUARE BRACKET)
+\item ] (U+005D, RIGHT SQUARE BRACKET)
+\item \{ (U+007B, LEFT CURLY BRACKET)
+\item \} (U+007D, RIGHT CURLY BRACKET)
+\item * (U+002A, ASTERISK)
+\item \ (U+005C, REVERSE SOLIDUS)
+\item ˆ (U+02C6, MODIFIER LETTER CIRCUMFLEX ACCENT)
+\item + (U+002B, PLUS SIGN)
+\item $ (U+0024, DOLLAR SIGN)
+}
+
+Note that overlapping matching does not (yet) work with regular expressions. That means that for example "aa" is only found once in "aaa". In some special cases this might lead to problems that might have to be explicitly specified in the profile, e.g. a grapheme "aa" with a left context "a". See examples below. This problem arises because overlap is only available in literal searches \link[stringi]{stri_opts_fixed}, but the current function uses regex-searching, which does not catch overlap \link[stringi]{stri_opts_regex}.
 }
 \author{
 Michael Cysouw <cysouw@mac.com>
@@ -107,19 +127,21 @@ profile <- cbind(
     Trans = c("a","e","n","N","x","sh"))
 # tokenization
 tokenize(c("nana", "änngschä", "ach"), profile)
-# with replacements and an error message
+# with replacements and a warning
 tokenize(c("Naná", "änngschä", "ach"), profile, transliterate = "Trans")
 
 # different results of ordering
 tokenize("aaa", c("a","aa"), order = NULL)
 tokenize("aaa", c("a","aa"), order = "size")
 
-# regexmatching does not catch overlap in some special cases
-# the following results in a warning instead of just parsing "ab bb"
-# this is clearly wrong! but it should occur exceedingly rarely
+# regexmatching does not catch overlap, which can lead to wrong results
+# the second example results in a warning instead of just parsing "ab bb"
+# this should occur only rarely in natural language
 tokenize("abbb", profile = c("ab","bb"), order = NULL)
+tokenize("abbb", profile = c("ab","bb"), order = NULL, regex = TRUE)
 
 # different parsing methods can lead to different results
+# note that in natural language this is VERY unlikely to happen
 tokenize("abc", c("bc","ab","a","c"), order = NULL, method = "global")$strings
 tokenize("abc", c("bc","ab","a","c"), order = NULL, method = "linear")$strings
 }

@@ -11,7 +11,7 @@ tokenize <- function(strings
                       , sep.replace = NULL
                       , missing = "\u2047"
                       , normalize = "NFC"
-                      , literal = FALSE
+                      , regex = FALSE
                       , silent = FALSE
                       , file.out = NULL) {
  
@@ -121,7 +121,7 @@ tokenize <- function(strings
   # prepare regexes with context from profile
   # -----------------------------------------
   
-  if (literal) {
+  if (!regex) {
     
     contexts <- graphs
     
@@ -196,7 +196,7 @@ tokenize <- function(strings
     }
  
     # ordering by existing of context
-    if (!literal && (l_exists || r_exists)) {   
+    if (!regex && (l_exists || r_exists)) {   
       context <- (left != "" | right != "") 
     } else {
       context <- rep(T, times = length(graphs))        
@@ -213,7 +213,7 @@ tokenize <- function(strings
     if (sum(!is.na(pmatch(ordering,"frequency"))) > 0) {
       frequency <- stri_count_regex(all
                          , pattern = contexts
-                         , literal = literal
+                         , literal = !regex
                          , case_insensitive = case.insensitive
                          )
     } else {
@@ -241,19 +241,36 @@ tokenize <- function(strings
   # regex matching
   # --------------
   
-  matches <- stri_locate_all_regex(
-                  all
-                  , pattern = contexts
-                  , literal = literal
-                  , case_insensitive = case.insensitive
-                  )
-  matched_parts <- stri_extract_all_regex(
+  if (!regex) {
+    
+    matches <- stri_locate_all_fixed(
                       all
                       , pattern = contexts
-                      , literal = literal
+                      , overlap = TRUE
                       , case_insensitive = case.insensitive
                       )
+    matched_parts <- stri_extract_all_fixed(
+                      all
+                      , pattern = contexts
+                      , overlap = TRUE
+                      , case_insensitive = case.insensitive
+                      )
+    
+  } else {
   
+    matches <- stri_locate_all_regex(
+                      all
+                      , pattern = contexts
+                      , case_insensitive = case.insensitive
+                      )
+    matched_parts <- stri_extract_all_regex(
+                      all
+                      , pattern = contexts
+                      , case_insensitive = case.insensitive
+                      )
+    
+  }
+    
   # --------------------------------------
   # tokenize data, either global or linear
   # --------------------------------------
@@ -265,27 +282,37 @@ tokenize <- function(strings
     # and insert graph into "taken" when free
     test_match <- function(context_nr) {
       
+      m <- matches[[context_nr]]
+      
       # check whether match is not yet taken
-      comparison <- apply(matches[[context_nr]], 1, function(x) {
+      not.already.taken <- apply(m, 1, function(x) {
                             if (is.na(x[1])) { NA } else {
-                            prod(is.na(taken[x[1]:x[2]]))
+                            prod(is.na(taken[x[1]:x[2]])) == 1
                             }})
-      free <- which(comparison ==  1)
+      free <- which(not.already.taken)
+      if (length(free) > 0) {
+        no.self.overlap <- c(TRUE
+                         , head(m[free,,drop = FALSE][,2],-1) < 
+                           tail(m[free,,drop = FALSE][,1],-1)
+                         )
+        free <- free[no.self.overlap]
+      }
       
       # check whether graph is regex with multiple matches
       different_graphs <- unique(matched_parts[[context_nr]])
       is.regex <- length(unique(different_graphs)) > 1
       
       # take possible matches
-      sapply(free, function(x) {
-        r <- matches[[context_nr]][x,]
+      for (x in free) {
+        r <- m[x,]
         if (!is.regex) {
           taken[r[1]:r[2]] <<- different_graphs
         } else {
           taken[r[1]:r[2]] <<- matched_parts[[context_nr]][x]
         }
-      })
-      return(matches[[context_nr]][free, , drop = FALSE])
+      }
+      
+      return(m[free, , drop = FALSE])
     }
 		# =================
     
