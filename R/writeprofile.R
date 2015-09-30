@@ -78,6 +78,14 @@ write.profile <- function(strings
     return(result)
     
   } else {
+ 
+    # check special characters for writing output
+    if (sum(grepl("\t", strings)) + 
+        sum(grepl("\n", strings)) +
+        sum(grepl("\r", strings))) {
+      warning("There are tabs and/or newline characters in the input strings. This will lead to problems with the profiles and the tokenization. Consider removing or replacing them in your input strings.")
+    }
+       
     write.table(result
                 , file = file.out
                 , quote = FALSE

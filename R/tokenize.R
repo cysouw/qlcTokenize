@@ -18,8 +18,10 @@ tokenize <- function(strings
   # ---------------
   # preprocess data
   # ---------------
+
+  strings <- as.character(strings)
   
-  # option gives errors, so removed
+  # option gives errors, so removed for now
   case.insensitive = FALSE
   
 	# separators
@@ -363,8 +365,8 @@ tokenize <- function(strings
     }
       
     postprocess <- function(taken) {
- 
-      # remove user_sep at start and end
+      
+      # remove internal_sep at start and end
       taken <- head(taken, -1)
       taken <- tail(taken, -1)
       
@@ -376,9 +378,11 @@ tokenize <- function(strings
       # bind together tokenized parts with user separator
       taken <- paste(taken, collapse = user_sep)
       
-      # Split string by internal separator surrounded by user_sep
-      split <- paste0(user_sep, internal_sep, user_sep)
-      result <- strsplit(taken, split = split)[[1]]
+      # Split string by internal separator
+      result <- strsplit(taken, split = internal_sep)[[1]]
+      
+      # remove user_sep at start and end
+      result <- substr(result, 2, nchar(result)-1)
       
       return(result)
     }
