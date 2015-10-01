@@ -56,7 +56,7 @@ Note that this parameter also influences whether contexts should be considered i
   Logical: by default missing characters in the strings are reported with a warning. use \code{silent = TRUE} to supress these warnings.
   }
   \item{file.out}{
-  Filename for results to be written. No suffix should be specified, as various different files with different suffixes are produced (see Details below).
+  Filename for results to be written. No suffix should be specified, as various different files with different suffixes are produced (see Details below). When \code{file.out} is specified, then the data is written to disk AND the R dataframe is returned invisibly.
 }
 }
 \details{

@@ -30,7 +30,7 @@ write.profile(strings,
   separator to separate the strings. When NULL (by default), then unicode character definitions are used to split (as provided by UCI, ported to R by \code{stringi::stri_split_boundaries}. When \code{sep} is specified, strings are split by this separator. Often useful is \code{sep = ""} to split by unicode codepoints (see examples below).
 }
   \item{file.out}{
-  Filename for writing the profile to disk. When \code{NULL} the profile is returned as an R dataframe consisting of strings.
+  Filename for writing the profile to disk. When \code{NULL} the profile is returned as an R dataframe consisting of strings. When \code{file.out} is specified (as a path to a file), then the profile is written to disk and the R dataframe is returned invisibly.
 }
 }
 \details{
