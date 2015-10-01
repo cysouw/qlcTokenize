@@ -91,5 +91,7 @@ write.profile <- function(strings
                 , quote = FALSE
                 , sep = "\t"
                 , row.names = FALSE)
+    
+    return(invisible(result))
   }
 }

@@ -366,10 +366,6 @@ tokenize <- function(strings
       
     postprocess <- function(taken) {
       
-      # remove internal_sep at start and end
-      taken <- head(taken, -1)
-      taken <- tail(taken, -1)
-      
       # replace separator
       if (!is.null(sep.replace)) {
         taken[taken == user_sep] <- sep.replace
@@ -379,7 +375,7 @@ tokenize <- function(strings
       taken <- paste(taken, collapse = user_sep)
       
       # Split string by internal separator
-      result <- strsplit(taken, split = internal_sep)[[1]]
+      result <- strsplit(taken, split = internal_sep)[[1]][-1]
       
       # remove user_sep at start and end
       result <- substr(result, 2, nchar(result)-1)
@@ -537,13 +533,15 @@ tokenize <- function(strings
   # output as list
   # --------------
   
+  result <- list(strings = strings.out
+                 , profile = profile.out
+                 , errors = problems
+                 , missing = problemChars
+                  )
+  
   if (is.null(file.out)) {
     
-    return(list(strings = strings.out
-                , profile = profile.out
-                , errors = problems
-                , missing = problemChars
-                ))
+    return(result)
     
   } else {   
     
@@ -570,6 +568,9 @@ tokenize <- function(strings
                     , file = paste(file.out, "_missing.tsv", sep = "")
                     , quote = FALSE, sep = "\t", row.names = FALSE)
     }
+    
+    return(invisible(result))
+    
   } 
 }
   
