@@ -169,10 +169,15 @@ tokenize <- function(strings
     left[left != ""] <- paste("(?<=", left[left != ""], ")", sep = "")
     right[right != ""] <- paste("(?=", right[right != ""], ")", sep = "")
     
-    # replace dot at start of left context with internal separator
+    # replace dot in context with internal separator
     left <- gsub("(?<=."
-                 , paste0("(?<!", internal_sep, ")(?<=")
+                 , paste0("(?<!", internal_sep, ")(?<=" )
                  , left
+                 , fixed =  TRUE
+    )
+    right <- gsub("(?=."
+                 , paste0("(?!", internal_sep, ")(?=" )
+                 , right
                  , fixed =  TRUE
     )
     
@@ -198,7 +203,7 @@ tokenize <- function(strings
     }
  
     # ordering by existing of context
-    if (!regex && (l_exists || r_exists)) {   
+    if (regex && (l_exists || r_exists)) {   
       context <- (left != "" | right != "") 
     } else {
       context <- rep(T, times = length(graphs))        
@@ -374,11 +379,17 @@ tokenize <- function(strings
       # bind together tokenized parts with user separator
       taken <- paste(taken, collapse = user_sep)
       
+      # remove multiple internal user separators
+      taken <- gsub(paste0(user_sep,"{2,10}"), user_sep, taken)
+      
       # Split string by internal separator
       result <- strsplit(taken, split = internal_sep)[[1]][-1]
       
       # remove user_sep at start and end
-      result <- substr(result, 2, nchar(result)-1)
+      result <- substr(x = result
+                       , start = nchar(user_sep)+1
+                       , stop = nchar(result)-nchar(user_sep)
+                       )
       
       return(result)
     }
