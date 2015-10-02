@@ -45,7 +45,7 @@ tokenize(strings,
   Which normalization to use before tokenization, defaults to "NFC". Other option is "NFD". Any other input will result in no normalisation being performed.
 }
   \item{regex}{
-  Logical: when \code{regex = FALSE} internally the matching of graphemes is done exact, i.e. without using regular expressions. When \code{regex = TRUE} ICU-style regular expression (see \link[stringi]{stri_search_regex}) are used, so any reserved characters have to be escaped in the orthography profile. Specifically, add a slash "\" before any occurrence of the characters \code{ [](){}+*.-!?ˆ$\ } in your profile (except of course when these characters are used in their regular expression meaning).
+  Logical: when \code{regex = FALSE} internally the matching of graphemes is done exact, i.e. without using regular expressions. When \code{regex = TRUE} ICU-style regular expression (see \link[stringi]{stri_search_regex}) are used, so any reserved characters have to be escaped in the orthography profile. Specifically, add a slash "\" before any occurrence of the characters \code{ [](){}|+*.-!?ˆ$\ } in your profile (except of course when these characters are used in their regular expression meaning).
   
 Note that this parameter also influences whether contexts should be considered in the tokenization (internally, contextual searching uses regular expressions). By default, when \code{regex = FALSE}, context is ignored. If \code{regex = TRUE} then the function checks whether there are columns called \code{Left} (for the left context) and \code{Right} (for the right context), and optionally a column called \code{Class} (for the specification of grapheme-classes) in the orthography profile. These are hard-coded column-names, so please adapt your orthography profile accordingly. The columns \code{Left} and \code{Right} allow for regular expression to specify context.
 }
@@ -99,6 +99,7 @@ When \code{regex = TRUE}, regular expressions are acceptable in the columns `Gra
 \item [ (U+005B, LEFT SQUARE BRACKET)
 \item ] (U+005D, RIGHT SQUARE BRACKET)
 \item \{ (U+007B, LEFT CURLY BRACKET)
+\item | (007C, VERTICAL LINE)
 \item \} (U+007D, RIGHT CURLY BRACKET)
 \item * (U+002A, ASTERISK)
 \item \ (U+005C, REVERSE SOLIDUS)
