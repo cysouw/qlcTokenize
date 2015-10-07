@@ -43,6 +43,8 @@ tokenize <- function(strings
 	strings <- transcode(originals)
 
   # collapse strings for doing everything at once
+	NAs <- which(is.na(strings))
+	strings[NAs] <- ""
   all <- paste(strings, collapse = internal_sep)
   all <- paste0(internal_sep, all, internal_sep)
   
@@ -492,6 +494,8 @@ tokenize <- function(strings
   # preparation of results
   # ----------------------
   
+  tokenized[NAs] <- NA
+  
   if (is.null(transliterate)) {
     
     strings.out <- data.frame(
@@ -502,6 +506,8 @@ tokenize <- function(strings
       )
     
   } else {
+    
+    transliterated[NAs] <- NA
     
     strings.out <- data.frame(
       cbind(originals = originals
