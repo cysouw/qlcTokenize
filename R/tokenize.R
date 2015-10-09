@@ -13,8 +13,9 @@ tokenize <- function(strings
                       , normalize = "NFC"
                       , regex = FALSE
                       , silent = FALSE
-                      , file.out = NULL) {
- 
+                      , file.out = NULL
+                    ) {
+  
   # ---------------
   # preprocess data
   # ---------------

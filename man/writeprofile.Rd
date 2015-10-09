@@ -11,7 +11,7 @@ Provided here is a function to prepare a skeleton for an orthography profile. Th
 \usage{
 write.profile(strings, 
     normalize = NULL, info = TRUE, editing = FALSE, sep = NULL, 
-    file.out = NULL)
+    file.out = NULL, collation.locale = NULL)
 }
 \arguments{
   \item{strings}{
@@ -32,6 +32,9 @@ write.profile(strings,
   \item{file.out}{
   Filename for writing the profile to disk. When \code{NULL} the profile is returned as an R dataframe consisting of strings. When \code{file.out} is specified (as a path to a file), then the profile is written to disk and the R dataframe is returned invisibly.
 }
+  \item{collation.locale}{
+  Specify to ordering to be used in writing the profile. By default it uses the ordering as specified in the current locale (check \code{Sys.getlocale("LC_COLLATE")}).
+  }
 }
 \details{
 String are devided into default grapheme clusters as defined by the Unicode specification. Underlying code is due to the UCI as ported to R in the \code{stringi} package.

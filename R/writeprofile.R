@@ -8,8 +8,18 @@ write.profile <- function(strings
                          , info = TRUE
                          , editing = FALSE
                          , sep = NULL
-                         , file.out = NULL) {
+                         , file.out = NULL
+                         , collation.locale = NULL
+                         ) {
   
+  # set locale
+  if (!is.null(collation.locale)) {
+    current.locale <- Sys.getlocale("LC_COLLATE")
+    Sys.setlocale("LC_COLLATE", collation.locale)
+    on.exit(Sys.setlocale("LC_COLLATE", current.locale))
+  }
+  
+  # use characters
   strings <- as.character(strings)
   
   # normalization
