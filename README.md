@@ -1,5 +1,5 @@
 qlcTokenize
-=========
+==========
 
 **Functions for orthography processing in Quantitative Language Comparison (QLC)**
 
